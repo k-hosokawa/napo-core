@@ -5,8 +5,20 @@ use anyhow::{Result, ensure, bail};
 pub enum Suit {
     Spade,
     Heart,
-    Club,
     Diamond,
+    Club,
+}
+
+impl Suit {
+    #[allow(dead_code)]
+    pub fn reverse(&self) -> Self {
+        match self {
+            Suit::Spade => Suit::Club,
+            Suit::Heart => Suit::Diamond,
+            Suit::Diamond => Suit::Heart,
+            Suit::Club => Suit::Spade,
+        }
+    }
 }
 
 impl Default for Suit {
@@ -30,32 +42,37 @@ impl Trump {
         let suit = match (id - 1) / 13 {
             0 => Suit::Spade,
             1 => Suit::Heart,
-            2 => Suit::Club,
-            3 => Suit::Diamond,
+            2 => Suit::Diamond,
+            3 => Suit::Club,
             _ => bail!("invalid id \"{}\"", id)
         };
         Ok(Trump{number, suit})
     }
 
     #[allow(dead_code)]
-    fn to_id(&self) -> usize {
+    pub fn to_id(&self) -> usize {
         let suit_num: usize = match self.suit {
             Suit::Spade => 0,
             Suit::Heart => 1,
-            Suit::Club => 2,
-            Suit::Diamond => 3,
+            Suit::Diamond => 2,
+            Suit::Club => 3,
         };
         (suit_num * 13) + self.number
     }
 
     #[allow(dead_code)]
-    fn is_almighty(&self) -> bool {
+    pub fn is_almighty(&self) -> bool {
         (self.number == 1) && (self.suit == Suit::Spade)
     }
 
     #[allow(dead_code)]
-    fn is_yoromeki(&self) -> bool {
+    pub fn is_yoromeki(&self) -> bool {
         (self.number == 12) && (self.suit == Suit::Heart)
+    }
+
+    #[allow(dead_code)]
+    pub fn is_face(&self) -> bool {
+        (self.number == 1) && (self.number >= 10)
     }
 }
 
@@ -75,11 +92,11 @@ mod tests {
 
         let t = Trump::from_id(36)?;
         assert_eq!(t.number, 10);
-        assert_eq!(t.suit, Suit::Club);
+        assert_eq!(t.suit, Suit::Diamond);
 
         let t = Trump::from_id(52)?;
         assert_eq!(t.number, 13);
-        assert_eq!(t.suit, Suit::Diamond);
+        assert_eq!(t.suit, Suit::Club);
 
         Ok(())
     }
@@ -90,10 +107,10 @@ mod tests {
         assert_eq!(t.to_id(), 1);
 
         let t = Trump{number: 10, suit: Suit::Club};
-        assert_eq!(t.to_id(), 36);
+        assert_eq!(t.to_id(), 49);
 
         let t = Trump{number: 13, suit: Suit::Diamond};
-        assert_eq!(t.to_id(), 52);
+        assert_eq!(t.to_id(), 39);
     }
 
     #[test]
