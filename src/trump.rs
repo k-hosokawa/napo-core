@@ -28,7 +28,7 @@ impl Default for Suit {
 }
 
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Trump {
     pub number: usize,
     pub suit: Suit,
@@ -72,7 +72,7 @@ impl Trump {
 
     #[allow(dead_code)]
     pub fn is_face(&self) -> bool {
-        (self.number == 1) && (self.number >= 10)
+        (self.number == 1) || (self.number >= 10)
     }
 }
 
