@@ -4,32 +4,35 @@ use rand::thread_rng;
 use rand::seq::SliceRandom;
 
 
+type Hands = [Trump; 10];
+
+
 #[derive(Debug)]
 #[allow(dead_code)]
-struct Distributed {
-    hands: Vec<Vec<Trump>>,
-    opens: Vec<Trump>,
+struct GameCards {
+    hands: [Hands; 5],
+    opens: [Trump; 2],
 }
 
-impl Distributed {
+impl GameCards {
     #[allow(dead_code)]
-    fn new() -> Result<Self> {
+    fn distribute() -> Result<Self> {
         let mut v: Vec<usize> = (1..53).collect();
         v.shuffle(&mut thread_rng());
-        let mut hands: Vec<Vec<Trump>> = Vec::new();
+        let mut hands: [Hands; 5] = Default::default();
         for pid in 0..5 {
-            let mut h: Vec<Trump> = Vec::new();
+            let mut h: Hands = Default::default();
             for i in 0..10 {
                 let trump_id = v[(pid * 10) + i];
-                h.push(Trump::from_id(trump_id)?);
+                h[i] = Trump::from_id(trump_id)?;
             }
-            hands.push(h);
+            hands[pid] = h;
         }
-        let opens = vec![
+        let opens: [Trump; 2] = [
             Trump::from_id(v[50])?,
             Trump::from_id(v[51])?,
         ];
-        Ok(Distributed{hands, opens})
+        Ok(GameCards{hands, opens})
     }
 }
 
@@ -39,8 +42,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_distributed_new() -> Result<()> {
-        Distributed::new()?;
+    fn test_distribute() -> Result<()> {
+        GameCards::distribute()?;
         Ok(())
     }
 }

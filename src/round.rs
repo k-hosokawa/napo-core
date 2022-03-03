@@ -1,15 +1,18 @@
 use anyhow::{Result, bail};
 use crate::trump::{Trump, Suit};
 
-fn ids_to_cards(ids: &Vec<usize>) -> Vec<Trump> {
+type FieldCardIds = [usize; 5];
+type FieldCards = [Trump; 5];
+
+fn ids_to_cards(ids: &FieldCardIds) -> Vec<Trump> {
     ids
-        .iter()
+        .into_iter()
         .map(|c| Trump::from_id(*c).unwrap())
         .collect::<Vec<Trump>>()
 }
 
 pub fn judge_winner(
-    ids: &Vec<usize>,
+    ids: &FieldCardIds,
     suit: Option<Suit>,
     n_round: usize,
 ) -> Result<usize> {
@@ -72,42 +75,42 @@ mod tests {
 
     #[test]
     fn test_ids_to_cards() -> Result<()> {
-        let v = vec![1, 4, 25, 40, 52];
-        let cards = ids_to_cards(&v);
+        let v: FieldCardIds = [1, 4, 25, 40, 52];
+        ids_to_cards(&v);
         Ok(())
     }
 
     #[test]
     fn test_judge_winner_almighty() -> Result<()> {
-        let v = vec![1, 4, 24, 40, 52];
+        let v: FieldCardIds = [1, 4, 24, 40, 52];
         assert_eq!(judge_winner(&v, None, 1)?, 0);
         Ok(())
     }
 
     #[test]
     fn test_judge_winner_yoromeki() -> Result<()> {
-        let v = vec![1, 4, 25, 40, 52];
+        let v: FieldCardIds = [1, 4, 25, 40, 52];
         assert_eq!(judge_winner(&v, None, 1)?, 2);
         Ok(())
     }
 
     #[test]
     fn test_judge_winner_jack() -> Result<()> {
-        let v = vec![2, 11, 24, 40, 52];
+        let v: FieldCardIds = [2, 11, 24, 40, 52];
         assert_eq!(judge_winner(&v, Some(Suit::Spade), 1)?, 1);
         Ok(())
     }
 
     #[test]
     fn test_judge_winner_rev_jack() -> Result<()> {
-        let v = vec![2, 4, 24, 40, 50];
+        let v: FieldCardIds = [2, 4, 24, 40, 50];
         assert_eq!(judge_winner(&v, Some(Suit::Spade), 1)?, 4);
         Ok(())
     }
 
     #[test]
     fn test_judge_winner_same2() -> Result<()> {
-        let v = vec![2, 3, 4, 5, 6];
+        let v: FieldCardIds = [2, 3, 4, 5, 6];
         assert_eq!(judge_winner(&v, None, 2)?, 0);
         assert_eq!(judge_winner(&v, None, 1)?, 4);
         Ok(())
