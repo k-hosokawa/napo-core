@@ -1,11 +1,9 @@
-use anyhow::Result;
 use crate::trump::Trump;
-use rand::thread_rng;
+use anyhow::Result;
 use rand::seq::SliceRandom;
-
+use rand::thread_rng;
 
 type Hands = [Trump; 10];
-
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -17,7 +15,7 @@ struct GameCards {
 impl GameCards {
     #[allow(dead_code)]
     fn distribute() -> Result<Self> {
-        let mut v: Vec<usize> = (1..53).collect();
+        let mut v: Vec<u8> = (1..53).collect();
         v.shuffle(&mut thread_rng());
         let mut hands: [Hands; 5] = Default::default();
         for pid in 0..5 {
@@ -28,14 +26,10 @@ impl GameCards {
             }
             hands[pid] = h;
         }
-        let opens: [Trump; 2] = [
-            Trump::from_id(v[50])?,
-            Trump::from_id(v[51])?,
-        ];
-        Ok(GameCards{hands, opens})
+        let opens: [Trump; 2] = [Trump::from_id(v[50])?, Trump::from_id(v[51])?];
+        Ok(GameCards { hands, opens })
     }
 }
-
 
 #[cfg(test)]
 mod tests {

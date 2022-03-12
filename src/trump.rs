@@ -1,4 +1,9 @@
 use anyhow::{bail, ensure, Result};
+use serde::de;
+use serde::de::{Deserialize, Deserializer, Visitor};
+use serde::ser::{Serialize, Serializer};
+use std::fmt;
+use std::result::Result as stdResult;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Suit {
@@ -28,13 +33,49 @@ impl Default for Suit {
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Trump {
-    pub number: usize,
+    pub number: u8,
     pub suit: Suit,
+}
+
+impl Serialize for Trump {
+    fn serialize<S>(&self, serializer: S) -> stdResult<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u8(self.to_id())
+    }
+}
+
+struct TrumpVisitor;
+
+impl<'de> Visitor<'de> for TrumpVisitor {
+    type Value = Trump;
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("an integer between 1 and 52")
+    }
+
+    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let t = Trump::from_id(value as u8).or_else(|e| Err(E::custom(e)));
+        println!("trump: {:?}", t);
+        t
+    }
+}
+
+impl<'de> Deserialize<'de> for Trump {
+    fn deserialize<D>(deserializer: D) -> Result<Trump, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_u8(TrumpVisitor)
+    }
 }
 
 impl Trump {
     #[allow(dead_code)]
-    pub fn from_id(id: usize) -> Result<Self> {
+    pub fn from_id(id: u8) -> Result<Self> {
         ensure!((id >= 1) && (id <= 52), "invalid id \"{}\"", id);
         let number = ((id - 1) % 13) + 1;
         let suit = match (id - 1) / 13 {
@@ -48,8 +89,8 @@ impl Trump {
     }
 
     #[allow(dead_code)]
-    pub fn to_id(&self) -> usize {
-        let suit_num: usize = match self.suit {
+    pub fn to_id(&self) -> u8 {
+        let suit_num: u8 = match self.suit {
             Suit::Spade => 0,
             Suit::Heart => 1,
             Suit::Diamond => 2,
@@ -77,6 +118,7 @@ impl Trump {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json;
 
     #[test]
     fn test_trump_from_id() -> Result<()> {
@@ -147,5 +189,46 @@ mod tests {
             suit: Suit::Spade,
         };
         assert_eq!(normal.is_yoromeki(), false);
+    }
+
+    #[test]
+    fn test_trump_to_json() {
+        let t = Trump {
+            number: 2,
+            suit: Suit::Heart,
+        };
+        assert_eq!(serde_json::to_string(&t).unwrap(), "15");
+    }
+
+    #[test]
+    fn test_json_to_trumps() -> Result<()> {
+        let j = "[1, 2, 30, 4, 52]";
+        let trumps: Vec<Trump> = serde_json::from_str(j)?;
+        let answers = vec![
+            Trump {
+                number: 1,
+                suit: Suit::Spade,
+            },
+            Trump {
+                number: 2,
+                suit: Suit::Spade,
+            },
+            Trump {
+                number: 4,
+                suit: Suit::Diamond,
+            },
+            Trump {
+                number: 4,
+                suit: Suit::Spade,
+            },
+            Trump {
+                number: 13,
+                suit: Suit::Club,
+            },
+        ];
+        for i in 0..5 {
+            assert_eq!(trumps[i], answers[i]);
+        }
+        Ok(())
     }
 }

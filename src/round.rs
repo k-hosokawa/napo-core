@@ -1,56 +1,58 @@
 use crate::trump::{Suit, Trump};
 use anyhow::Result;
-
-#[allow(dead_code)]
-type FieldCardIds = [usize; 5];
+use serde::{Deserialize, Serialize};
+use std::convert::TryInto;
 
 #[allow(dead_code)]
 type FieldCards = [Trump; 5];
 
 #[allow(dead_code)]
-fn ids_to_cards(ids: &FieldCardIds) -> Vec<Trump> {
+type FieldCardIds = [u8; 5];
+
+#[allow(dead_code)]
+fn get_field_cards(ids: &FieldCardIds) -> FieldCards {
     ids.into_iter()
         .map(|c| Trump::from_id(*c).unwrap())
         .collect::<Vec<Trump>>()
+        .try_into()
+        .unwrap()
 }
 
 struct RoundResultBuilder {
-    ids: FieldCardIds,
-    cards: Vec<Trump>,
+    cards: FieldCards,
     face_cards: Vec<Trump>,
 }
 
 impl RoundResultBuilder {
-    fn new(ids: &FieldCardIds) -> Self {
-        let cards = ids_to_cards(&ids);
+    fn new(cards: &FieldCards) -> Self {
         let face_cards: Vec<Trump> = cards.iter().filter(|c| c.is_face()).cloned().collect();
         RoundResultBuilder {
-            ids: *ids,
-            cards,
+            cards: (*cards).clone(),
             face_cards,
         }
     }
 
     fn build(&self, winner_id: usize) -> Result<RoundResult> {
         Ok(RoundResult {
-            cards: self.ids,
+            cards: self.cards.clone(),
             face_cards: self.face_cards.clone(),
-            winner_id,
+            winner_id: winner_id.try_into()?,
         })
     }
 }
 
 #[allow(dead_code)]
+#[derive(Serialize, Deserialize)]
 pub struct RoundResult {
-    cards: FieldCardIds,
+    cards: FieldCards,
     winner_id: usize,
     face_cards: Vec<Trump>,
 }
 
 impl RoundResult {
     #[allow(dead_code)]
-    pub fn new(ids: &FieldCardIds, suit: Option<Suit>, n_round: usize) -> Result<Self> {
-        let builder = RoundResultBuilder::new(ids);
+    pub fn new(cards: &FieldCards, suit: Option<Suit>, n_round: u8) -> Result<Self> {
+        let builder = RoundResultBuilder::new(cards);
 
         // almighty
         if let Some(id) = builder.cards.iter().position(|c| c.is_almighty()) {
@@ -112,18 +114,20 @@ impl RoundResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn test_ids_to_cards() -> Result<()> {
         let v: FieldCardIds = [1, 4, 25, 40, 52];
-        ids_to_cards(&v);
+        get_field_cards(&v);
         Ok(())
     }
 
     #[test]
     fn test_judge_winner_almighty() -> Result<()> {
         let v: FieldCardIds = [1, 4, 24, 40, 52];
-        let r = RoundResult::new(&v, None, 1)?;
+        let cs = get_field_cards(&v);
+        let r = RoundResult::new(&cs, None, 1)?;
         assert_eq!(r.winner_id, 0);
         assert_eq!(
             r.face_cards,
@@ -140,7 +144,8 @@ mod tests {
     #[test]
     fn test_judge_winner_yoromeki() -> Result<()> {
         let v: FieldCardIds = [1, 4, 25, 40, 52];
-        let r = RoundResult::new(&v, None, 1)?;
+        let cs = get_field_cards(&v);
+        let r = RoundResult::new(&cs, None, 1)?;
         assert_eq!(r.winner_id, 2);
         assert_eq!(
             r.face_cards,
@@ -157,7 +162,8 @@ mod tests {
     #[test]
     fn test_judge_winner_jack() -> Result<()> {
         let v: FieldCardIds = [2, 11, 24, 40, 52];
-        let r = RoundResult::new(&v, Some(Suit::Spade), 1)?;
+        let cs = get_field_cards(&v);
+        let r = RoundResult::new(&cs, Some(Suit::Spade), 1)?;
         assert_eq!(r.winner_id, 1);
         assert_eq!(
             r.face_cards,
@@ -174,7 +180,8 @@ mod tests {
     #[test]
     fn test_judge_winner_rev_jack() -> Result<()> {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
-        let r = RoundResult::new(&v, Some(Suit::Spade), 1)?;
+        let cs = get_field_cards(&v);
+        let r = RoundResult::new(&cs, Some(Suit::Spade), 1)?;
         assert_eq!(r.winner_id, 4);
         assert_eq!(
             r.face_cards,
@@ -191,13 +198,44 @@ mod tests {
     fn test_judge_winner_same2() -> Result<()> {
         let v: FieldCardIds = [2, 3, 4, 5, 6];
 
-        let r = RoundResult::new(&v, None, 2)?;
+        let cs = get_field_cards(&v);
+        let r = RoundResult::new(&cs, None, 2)?;
         assert_eq!(r.winner_id, 0);
         assert_eq!(r.face_cards, Vec::<Trump>::new(),);
 
-        let r = RoundResult::new(&v, None, 1)?;
+        let r = RoundResult::new(&cs, None, 1)?;
         assert_eq!(r.winner_id, 4);
         assert_eq!(r.face_cards, Vec::<Trump>::new(),);
+        Ok(())
+    }
+
+    #[test]
+    fn test_to_json() -> Result<()> {
+        let v: FieldCardIds = [2, 4, 24, 40, 50];
+        let cs = get_field_cards(&v);
+        let r = RoundResult::new(&cs, Some(Suit::Spade), 1)?;
+        serde_json::to_string(&r)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_from_json() -> Result<()> {
+        let cards: [u8; 5] = [2, 4, 24, 40, 50];
+        let winner_id: usize = 4;
+        let face_cards: [u8; 3] = [4, 24, 50];
+        let j = json!({
+            "cards": cards,
+            "winner_id": winner_id,
+            "face_cards": face_cards,
+        });
+        let r: RoundResult = serde_json::from_str(j.to_string().as_str())?;
+        for i in 0..5 {
+            assert_eq!(r.cards[i].to_id(), cards[i]);
+        }
+        for i in 0..3 {
+            assert_eq!(r.face_cards[i].to_id(), face_cards[i]);
+        }
+        assert_eq!(r.winner_id, r.winner_id);
         Ok(())
     }
 }
