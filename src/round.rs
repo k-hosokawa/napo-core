@@ -15,78 +15,102 @@ fn ids_to_cards(ids: &FieldCardIds) -> Vec<Trump> {
         .collect::<Vec<Trump>>()
 }
 
+struct RoundResultBuilder {
+    ids: FieldCardIds,
+    cards: Vec<Trump>,
+    face_cards: Vec<Trump>,
+}
+
+impl RoundResultBuilder {
+    fn new(ids: &FieldCardIds) -> Self {
+        let cards = ids_to_cards(&ids);
+        let face_cards: Vec<Trump> = cards
+            .iter()
+            .filter(|c| c.is_face())
+            .cloned()
+            .collect();
+        RoundResultBuilder{
+            ids: *ids,
+            cards,
+            face_cards,
+        }
+    }
+
+    fn build(&self, winner_id: usize) -> Result<RoundResult> {
+        Ok(RoundResult{
+            cards: self.ids,
+            face_cards: self.face_cards.clone(),
+            winner_id,
+        })
+    }
+}
+
 #[allow(dead_code)]
 pub struct RoundResult {
+    cards: FieldCardIds,
     winner_id: usize,
     face_cards: Vec<Trump>,
 }
 
-#[allow(dead_code)]
-pub fn judge_winner(
-    ids: &FieldCardIds,
-    suit: Option<Suit>,
-    n_round: usize,
-) -> Result<RoundResult> {
-    let cards = ids_to_cards(&ids);
+impl RoundResult {
+    #[allow(dead_code)]
+    pub fn new(
+        ids: &FieldCardIds,
+        suit: Option<Suit>,
+        n_round: usize,
+    ) -> Result<Self> {
+        let builder = RoundResultBuilder::new(ids);
 
-    let face_cards: Vec<Trump> = cards
-        .iter()
-        .filter(|c| c.is_face())
-        .cloned()
-        .collect();
+        let almighty = builder.cards.iter().position(|c| c.is_almighty());
+        let yoromeki = builder.cards.iter().position(|c| c.is_yoromeki());
 
-    let almighty = cards.iter().position(|c| c.is_almighty());
-    let yoromeki = cards.iter().position(|c| c.is_yoromeki());
-
-    if let Some(id) = almighty {
-        return Ok(RoundResult{
-            winner_id: yoromeki.unwrap_or(id),
-            face_cards,
-        });
-    }
-
-    // jack
-    if let Some(s) = suit {
-        let id = cards
-            .iter()
-            .position(|c| (c.number == 11) && (c.suit == s));
-        if let Some(i) = id {
-            return Ok(RoundResult{winner_id: i, face_cards});
+        if let Some(id) = almighty {
+            return builder.build(yoromeki.unwrap_or(id));
         }
-    }
 
-    // reverse jack
-    if let Some(s) = suit {
-        let id = cards
-            .iter()
-            .position(|c| (c.number == 11) && (c.suit == s.reverse()));
-        if let Some(i) = id {
-            return Ok(RoundResult{winner_id: i, face_cards});
-        }
-    }
-
-    // same2
-    if n_round > 1 && (
-        cards.iter().all(|c| c.suit == cards[0].suit) 
-    ) {
-        if let Some(id) = cards.iter().position(|c| c.number == 2) {
-            return Ok(RoundResult{winner_id: id, face_cards});
-        }
-    }
-
-    let first_suit = cards[0].suit;
-    let mut winner_id = 0;
-    for i in 1..5 {
-        if cards[i].suit == first_suit {
-            if cards[i].number == 1 {
-                return Ok(RoundResult{winner_id: i, face_cards});
+        // jack
+        if let Some(s) = suit {
+            let id = builder.cards
+                .iter()
+                .position(|c| (c.number == 11) && (c.suit == s));
+            if let Some(i) = id {
+                return builder.build(i)
             }
-            if cards[i].number > cards[winner_id].number {
-                winner_id = i;
+
+            // reverse jack
+            let id = builder.cards
+                .iter()
+                .position(|c| (c.number == 11) && (c.suit == s.reverse()));
+            if let Some(i) = id {
+                return builder.build(i);
             }
         }
+
+        let first_suit = builder.cards[0].suit;
+
+        // same2
+        if n_round > 1 && (
+            builder.cards.iter().all(|c| c.suit == first_suit) 
+        ) {
+            if let Some(id) = builder.cards.iter().position(|c| c.number == 2) {
+                return builder.build(id);
+            }
+        }
+
+        let mut winner_id = 0;
+        for i in 1..5 {
+            let c = &builder.cards[i];
+            if c.suit == first_suit {
+                if c.number == 1 {
+                    return builder.build(i);
+                }
+                if c.number > builder.cards[winner_id].number {
+                    winner_id = i;
+                }
+            }
+        }
+        builder.build(winner_id)
     }
-    Ok(RoundResult{winner_id, face_cards})
 }
 
 #[cfg(test)]
@@ -103,7 +127,7 @@ mod tests {
     #[test]
     fn test_judge_winner_almighty() -> Result<()> {
         let v: FieldCardIds = [1, 4, 24, 40, 52];
-        let r = judge_winner(&v, None, 1)?;
+        let r = RoundResult::new(&v, None, 1)?;
         assert_eq!(r.winner_id, 0);
         assert_eq!(
             r.face_cards,
@@ -120,7 +144,7 @@ mod tests {
     #[test]
     fn test_judge_winner_yoromeki() -> Result<()> {
         let v: FieldCardIds = [1, 4, 25, 40, 52];
-        let r = judge_winner(&v, None, 1)?;
+        let r = RoundResult::new(&v, None, 1)?;
         assert_eq!(r.winner_id, 2);
         assert_eq!(
             r.face_cards,
@@ -137,7 +161,7 @@ mod tests {
     #[test]
     fn test_judge_winner_jack() -> Result<()> {
         let v: FieldCardIds = [2, 11, 24, 40, 52];
-        let r = judge_winner(&v, Some(Suit::Spade), 1)?;
+        let r = RoundResult::new(&v, Some(Suit::Spade), 1)?;
         assert_eq!(r.winner_id, 1);
         assert_eq!(
             r.face_cards,
@@ -154,7 +178,7 @@ mod tests {
     #[test]
     fn test_judge_winner_rev_jack() -> Result<()> {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
-        let r = judge_winner(&v, Some(Suit::Spade), 1)?;
+        let r = RoundResult::new(&v, Some(Suit::Spade), 1)?;
         assert_eq!(r.winner_id, 4);
         assert_eq!(
             r.face_cards,
@@ -171,14 +195,14 @@ mod tests {
     fn test_judge_winner_same2() -> Result<()> {
         let v: FieldCardIds = [2, 3, 4, 5, 6];
 
-        let r = judge_winner(&v, None, 2)?;
+        let r = RoundResult::new(&v, None, 2)?;
         assert_eq!(r.winner_id, 0);
         assert_eq!(
             r.face_cards,
             Vec::<Trump>::new(),
         );
 
-        let r = judge_winner(&v, None, 1)?;
+        let r = RoundResult::new(&v, None, 1)?;
         assert_eq!(r.winner_id, 4);
         assert_eq!(
             r.face_cards,
