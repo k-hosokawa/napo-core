@@ -58,9 +58,7 @@ impl<'de> Visitor<'de> for TrumpVisitor {
     where
         E: de::Error,
     {
-        let t = Trump::from_id(value as u8).or_else(|e| Err(E::custom(e)));
-        println!("trump: {:?}", t);
-        t
+        Trump::from_id(value as u8).map_err(|e| E::custom(e))
     }
 }
 
@@ -76,7 +74,7 @@ impl<'de> Deserialize<'de> for Trump {
 impl Trump {
     #[allow(dead_code)]
     pub fn from_id(id: u8) -> Result<Self> {
-        ensure!((id >= 1) && (id <= 52), "invalid id \"{}\"", id);
+        ensure!((1..=52).contains(&id), "invalid id \"{}\"", id);
         let number = ((id - 1) % 13) + 1;
         let suit = match (id - 1) / 13 {
             0 => Suit::Spade,

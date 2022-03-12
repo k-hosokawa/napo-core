@@ -11,7 +11,7 @@ type FieldCardIds = [u8; 5];
 
 #[allow(dead_code)]
 fn get_field_cards(ids: &FieldCardIds) -> FieldCards {
-    ids.into_iter()
+    ids.iter()
         .map(|c| Trump::from_id(*c).unwrap())
         .collect::<Vec<Trump>>()
         .try_into()
@@ -36,7 +36,7 @@ impl RoundResultBuilder {
         Ok(RoundResult {
             cards: self.cards.clone(),
             face_cards: self.face_cards.clone(),
-            winner_id: winner_id.try_into()?,
+            winner_id,
         })
     }
 }
