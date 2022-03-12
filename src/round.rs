@@ -1,5 +1,5 @@
+use crate::trump::{Suit, Trump};
 use anyhow::Result;
-use crate::trump::{Trump, Suit};
 
 #[allow(dead_code)]
 type FieldCardIds = [usize; 5];
@@ -9,8 +9,7 @@ type FieldCards = [Trump; 5];
 
 #[allow(dead_code)]
 fn ids_to_cards(ids: &FieldCardIds) -> Vec<Trump> {
-    ids
-        .into_iter()
+    ids.into_iter()
         .map(|c| Trump::from_id(*c).unwrap())
         .collect::<Vec<Trump>>()
 }
@@ -24,12 +23,8 @@ struct RoundResultBuilder {
 impl RoundResultBuilder {
     fn new(ids: &FieldCardIds) -> Self {
         let cards = ids_to_cards(&ids);
-        let face_cards: Vec<Trump> = cards
-            .iter()
-            .filter(|c| c.is_face())
-            .cloned()
-            .collect();
-        RoundResultBuilder{
+        let face_cards: Vec<Trump> = cards.iter().filter(|c| c.is_face()).cloned().collect();
+        RoundResultBuilder {
             ids: *ids,
             cards,
             face_cards,
@@ -37,7 +32,7 @@ impl RoundResultBuilder {
     }
 
     fn build(&self, winner_id: usize) -> Result<RoundResult> {
-        Ok(RoundResult{
+        Ok(RoundResult {
             cards: self.ids,
             face_cards: self.face_cards.clone(),
             winner_id,
@@ -54,33 +49,36 @@ pub struct RoundResult {
 
 impl RoundResult {
     #[allow(dead_code)]
-    pub fn new(
-        ids: &FieldCardIds,
-        suit: Option<Suit>,
-        n_round: usize,
-    ) -> Result<Self> {
+    pub fn new(ids: &FieldCardIds, suit: Option<Suit>, n_round: usize) -> Result<Self> {
         let builder = RoundResultBuilder::new(ids);
 
-        let almighty = builder.cards.iter().position(|c| c.is_almighty());
-        let yoromeki = builder.cards.iter().position(|c| c.is_yoromeki());
-
-        if let Some(id) = almighty {
-            return builder.build(yoromeki.unwrap_or(id));
+        // almighty
+        if let Some(id) = builder.cards.iter().position(|c| c.is_almighty()) {
+            return builder.build(
+                builder
+                    .cards
+                    .iter()
+                    .position(|c| c.is_yoromeki())
+                    .unwrap_or(id),
+            );
         }
 
         // jack
         if let Some(s) = suit {
-            let id = builder.cards
+            let id = builder
+                .cards
                 .iter()
                 .position(|c| (c.number == 11) && (c.suit == s));
             if let Some(i) = id {
-                return builder.build(i)
+                return builder.build(i);
             }
 
             // reverse jack
-            let id = builder.cards
+            let rev_suit = s.reverse();
+            let id = builder
+                .cards
                 .iter()
-                .position(|c| (c.number == 11) && (c.suit == s.reverse()));
+                .position(|c| (c.number == 11) && (c.suit == rev_suit));
             if let Some(i) = id {
                 return builder.build(i);
             }
@@ -89,9 +87,7 @@ impl RoundResult {
         let first_suit = builder.cards[0].suit;
 
         // same2
-        if n_round > 1 && (
-            builder.cards.iter().all(|c| c.suit == first_suit) 
-        ) {
+        if n_round > 1 && (builder.cards.iter().all(|c| c.suit == first_suit)) {
             if let Some(id) = builder.cards.iter().position(|c| c.number == 2) {
                 return builder.build(id);
             }
@@ -197,17 +193,11 @@ mod tests {
 
         let r = RoundResult::new(&v, None, 2)?;
         assert_eq!(r.winner_id, 0);
-        assert_eq!(
-            r.face_cards,
-            Vec::<Trump>::new(),
-        );
+        assert_eq!(r.face_cards, Vec::<Trump>::new(),);
 
         let r = RoundResult::new(&v, None, 1)?;
         assert_eq!(r.winner_id, 4);
-        assert_eq!(
-            r.face_cards,
-            Vec::<Trump>::new(),
-        );
+        assert_eq!(r.face_cards, Vec::<Trump>::new(),);
         Ok(())
     }
 }

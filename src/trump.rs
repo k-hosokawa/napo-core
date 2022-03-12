@@ -1,5 +1,4 @@
-use anyhow::{Result, ensure, bail};
-
+use anyhow::{bail, ensure, Result};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Suit {
@@ -27,7 +26,6 @@ impl Default for Suit {
     }
 }
 
-
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Trump {
     pub number: usize,
@@ -44,9 +42,9 @@ impl Trump {
             1 => Suit::Heart,
             2 => Suit::Diamond,
             3 => Suit::Club,
-            _ => bail!("invalid id \"{}\"", id)
+            _ => bail!("invalid id \"{}\"", id),
         };
-        Ok(Trump{number, suit})
+        Ok(Trump { number, suit })
     }
 
     #[allow(dead_code)]
@@ -76,7 +74,6 @@ impl Trump {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -103,31 +100,52 @@ mod tests {
 
     #[test]
     fn test_trump_to_id() {
-        let t = Trump{number: 1, suit: Suit::Spade};
+        let t = Trump {
+            number: 1,
+            suit: Suit::Spade,
+        };
         assert_eq!(t.to_id(), 1);
 
-        let t = Trump{number: 10, suit: Suit::Club};
+        let t = Trump {
+            number: 10,
+            suit: Suit::Club,
+        };
         assert_eq!(t.to_id(), 49);
 
-        let t = Trump{number: 13, suit: Suit::Diamond};
+        let t = Trump {
+            number: 13,
+            suit: Suit::Diamond,
+        };
         assert_eq!(t.to_id(), 39);
     }
 
     #[test]
     fn test_is_almighty() {
-        let almighty = Trump{number: 1, suit: Suit::Spade};
+        let almighty = Trump {
+            number: 1,
+            suit: Suit::Spade,
+        };
         assert_eq!(almighty.is_almighty(), true);
 
-        let normal = Trump{number: 3, suit: Suit::Spade};
+        let normal = Trump {
+            number: 3,
+            suit: Suit::Spade,
+        };
         assert_eq!(normal.is_almighty(), false);
     }
 
     #[test]
     fn test_is_yoromeki() {
-        let almighty = Trump{number: 12, suit: Suit::Heart};
+        let almighty = Trump {
+            number: 12,
+            suit: Suit::Heart,
+        };
         assert_eq!(almighty.is_yoromeki(), true);
 
-        let normal = Trump{number: 3, suit: Suit::Spade};
+        let normal = Trump {
+            number: 3,
+            suit: Suit::Spade,
+        };
         assert_eq!(normal.is_yoromeki(), false);
     }
 }
