@@ -5,7 +5,7 @@ use serde::ser::{Serialize, Serializer};
 use std::fmt;
 use std::result::Result as stdResult;
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Suit {
     Spade,
     Heart,

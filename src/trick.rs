@@ -84,7 +84,7 @@ impl TrickResult {
             }
         }
 
-        let first_suit = builder.trick[0].card.suit;
+        let first_suit = builder.trick[0].card.suit.clone();
 
         // same2
         if n_round > 1 && (builder.trick.iter().all(|c| c.card.suit == first_suit)) {
