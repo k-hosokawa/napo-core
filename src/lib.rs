@@ -1,5 +1,6 @@
+mod card;
 mod cards;
 mod declaration;
 mod game;
-mod round;
-mod trump;
+mod player;
+mod trick;
