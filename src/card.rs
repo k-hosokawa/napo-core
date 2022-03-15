@@ -1,12 +1,12 @@
 use anyhow::{bail, ensure, Result};
-use serde;
 use serde::de;
 use serde::de::{Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
+use serde::{Deserialize as serdeDeserialize, Serialize as serdeSerialize};
 use std::fmt;
 use std::result::Result as stdResult;
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, serdeSerialize, serdeDeserialize)]
 pub enum Suit {
     Spade,
     Heart,

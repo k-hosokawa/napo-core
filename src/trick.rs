@@ -1,5 +1,5 @@
 use crate::card::{Card, Suit};
-use crate::player::{FieldPlayer, Player, Role};
+use crate::player::FieldPlayer;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -112,6 +112,7 @@ impl TrickResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::player::{Player, Role};
     use serde_json::json;
     use std::convert::TryInto;
 
