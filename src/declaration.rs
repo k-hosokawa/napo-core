@@ -2,9 +2,10 @@ use crate::card::{Card, Suit};
 use crate::cards::GameCards;
 use crate::player::{FieldPlayer, FieldPlayers, Player, Role};
 use anyhow::{bail, Result};
+use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Declaration {
     pub players: FieldPlayers,
     pub suit: Option<Suit>,
@@ -53,6 +54,10 @@ impl Declaration {
         })
     }
 
+    fn is_alone(&self) -> bool {
+        self.players.iter().any(|p| p.role == Role::Aide)
+    }
+
     #[allow(dead_code)]
     fn others_score(&self) -> usize {
         self.number - 12
@@ -60,6 +65,10 @@ impl Declaration {
 
     #[allow(dead_code)]
     fn napoleon_score(&self) -> usize {
-        self.others_score() * 2
+        if self.is_alone() {
+            self.others_score() * 4
+        } else {
+            self.others_score() * 2
+        }
     }
 }

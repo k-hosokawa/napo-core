@@ -1,11 +1,12 @@
 use anyhow::{bail, ensure, Result};
+use serde;
 use serde::de;
 use serde::de::{Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
 use std::fmt;
 use std::result::Result as stdResult;
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Suit {
     Spade,
     Heart,
@@ -14,7 +15,6 @@ pub enum Suit {
 }
 
 impl Suit {
-    #[allow(dead_code)]
     pub fn reverse(&self) -> Self {
         match self {
             Suit::Spade => Suit::Club,
@@ -72,7 +72,6 @@ impl<'de> Deserialize<'de> for Card {
 }
 
 impl Card {
-    #[allow(dead_code)]
     pub fn from_id(id: u8) -> Result<Self> {
         ensure!((1..=52).contains(&id), "invalid id \"{}\"", id);
         let number = ((id - 1) % 13) + 1;
@@ -86,7 +85,6 @@ impl Card {
         Ok(Card { number, suit })
     }
 
-    #[allow(dead_code)]
     pub fn to_id(&self) -> u8 {
         let suit_num: u8 = match self.suit {
             Suit::Spade => 0,
@@ -97,17 +95,14 @@ impl Card {
         (suit_num * 13) + self.number
     }
 
-    #[allow(dead_code)]
     pub fn is_almighty(&self) -> bool {
         (self.number == 1) && (self.suit == Suit::Spade)
     }
 
-    #[allow(dead_code)]
     pub fn is_yoromeki(&self) -> bool {
         (self.number == 12) && (self.suit == Suit::Heart)
     }
 
-    #[allow(dead_code)]
     pub fn is_face(&self) -> bool {
         (self.number == 1) || (self.number >= 10)
     }

@@ -1,60 +1,91 @@
+use crate::card::Card;
 use crate::declaration::Declaration;
-use crate::player::{Player, Players};
+use crate::player::{FieldPlayer, Player, Players, Role};
 use crate::trick::TrickResult;
-// use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[allow(dead_code)]
 enum Team {
-    NapoleonTeam,
+    Napoleon,
     Union,
 }
 
-#[allow(dead_code)]
-struct PlayerScore {
-    player: Player,
-    score: usize,
-}
-
-#[allow(dead_code)]
-type PlayerScores = [PlayerScore; 5];
-
-#[allow(dead_code)]
-pub struct RoundResult {
+#[derive(Serialize, Deserialize)]
+pub struct Round {
     trick_results: Vec<TrickResult>,
     declaration: Declaration,
+    face_card_counter: HashMap<FieldPlayer, Vec<Card>>,
 }
 
-impl RoundResult {
+impl Round {
     #[allow(dead_code)]
     fn new(declaration: Declaration) -> Self {
         let trick_results: Vec<TrickResult> = Vec::new();
-        RoundResult {
+        Round {
             trick_results,
             declaration,
+            face_card_counter: HashMap::new(),
         }
     }
 
     #[allow(dead_code)]
     fn add(&mut self, result: TrickResult) {
+        (*self
+            .face_card_counter
+            .entry(result.winner.clone())
+            .or_insert(Vec::new()))
+        .extend(result.face_cards.iter().cloned());
         self.trick_results.push(result);
     }
 
-    // #[allow(dead_code)]
-    // fn judge(&self) {
-    //     let mut counter = HashMap::new();
-    //     self.trick_results.iter().map(|t| {
-    //         let s = t.face_cards.len();
-    //         let c = counter.entry(t.winner.clone()).or_insert(s);
-    //         *c += s;
-    //     });
-    // }
+    #[allow(dead_code)]
+    fn team_score(&self) -> (usize, usize) {
+        let mut napo_score = 0;
+        let mut union_score = 0;
+        for (player, face_cards) in &self.face_card_counter {
+            let s = face_cards.len();
+            match player.role {
+                Role::Napoleon | Role::Aide => napo_score += s,
+                Role::Union => union_score += s,
+            }
+        }
+        (napo_score, union_score)
+    }
 
-    // #[allow(dead_code)]
-    // fn get_score(&self) -> PlayerScores {}
+    #[allow(dead_code)]
+    fn winner(&self) -> Option<Team> {
+        let (napo_score, union_score) = self.team_score();
+        if union_score > 20 - self.declaration.number {
+            return Some(Team::Union);
+        }
+        if self.declaration.number == 20 {
+            return if napo_score == 20 {
+                Some(Team::Napoleon)
+            } else {
+                None
+            };
+        }
+        if napo_score == 20 {
+            return Some(Team::Union);
+        }
+        if napo_score >= self.declaration.number {
+            return Some(Team::Napoleon);
+        }
+        None
+    }
 }
 
+#[allow(dead_code)]
+#[derive(Serialize, Deserialize)]
+struct PlayerScore {
+    player: Player,
+    score: usize,
+}
+
+type PlayerScores = [PlayerScore; 5];
+
 impl PlayerScore {
-    #[allow(dead_code)]
     fn new(player: Player) -> Self {
         PlayerScore { player, score: 0 }
     }
@@ -68,24 +99,25 @@ impl PlayerScore {
 }
 
 #[allow(dead_code)]
+#[derive(Serialize, Deserialize)]
 pub struct Game {
-    players: Players,
-    round_results: Vec<RoundResult>,
+    player_scores: PlayerScores,
+    rounds: Vec<Round>,
 }
 
 impl Game {
     #[allow(dead_code)]
     fn new(players: Players) -> Self {
-        let round_results: Vec<RoundResult> = Vec::new();
+        let rounds: Vec<Round> = Vec::new();
         Game {
-            players,
-            round_results,
+            player_scores: players.map(PlayerScore::new),
+            rounds,
         }
     }
 
     #[allow(dead_code)]
-    fn add(&mut self, result: RoundResult) {
-        self.round_results.push(result);
+    fn add(&mut self, round: Round) {
+        self.rounds.push(round);
     }
 
     // #[allow(dead_code)]
