@@ -212,7 +212,7 @@ mod tests {
     fn dummy_trick(field_players: FieldPlayers, i: usize) -> TrickArray {
         let mut trick = Trick::new();
         for p in field_players {
-            trick.add(Play::new(p.clone(), p.hands[i].clone()));
+            trick.add(Play::new(p.player.clone(), p.hands[i].clone()));
         }
         trick.array().unwrap()
     }

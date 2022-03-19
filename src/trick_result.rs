@@ -154,7 +154,7 @@ mod tests {
             .unwrap();
         let mut trick = Trick::new();
         for p in field_players {
-            trick.add(Play::new(p.clone(), p.hands[9].clone()));
+            trick.add(Play::new(p.player.clone(), p.hands[9].clone()));
         }
         trick
     }

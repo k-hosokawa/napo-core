@@ -1,5 +1,5 @@
 use crate::card::Card;
-use crate::player::{FieldPlayer, Player};
+use crate::player::Player;
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
@@ -13,9 +13,9 @@ pub struct Play {
 
 impl Play {
     #[allow(dead_code)]
-    pub fn new(player: FieldPlayer, card: Card) -> Self {
+    pub fn new(player: Player, card: Card) -> Self {
         Play {
-            player: player.player,
+            player: player,
             card,
         }
     }
@@ -47,5 +47,66 @@ impl Trick {
     pub(crate) fn array(&self) -> Result<TrickArray> {
         ensure!(self.plays.len() == 5, "This Trick is not finished yet");
         Ok(self.plays.clone().try_into().unwrap())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::player::get_dummy_players;
+    use crate::round::Round;
+    use std::iter::zip;
+
+    #[test]
+    fn test_trick_add() -> Result<()> {
+        let mut trick = Trick::new();
+
+        let players = get_dummy_players();
+        let r = Round::new(players.clone());
+        trick.add(Play::new(
+            r.field_players[0].player.clone(),
+            r.field_players[0].hands[0].clone(),
+        ));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_trick_last_player() -> Result<()> {
+        let mut trick = Trick::new();
+        assert_eq!(trick.last_player(), None);
+
+        let players = get_dummy_players();
+        let r = Round::new(players.clone());
+        trick.add(Play::new(
+            r.field_players[0].player.clone(),
+            r.field_players[0].hands[0].clone(),
+        ));
+        assert_eq!(trick.last_player(), Some(r.field_players[0].player.clone()));
+
+        trick.add(Play::new(
+            r.field_players[1].player.clone(),
+            r.field_players[1].hands[0].clone(),
+        ));
+        assert_eq!(trick.last_player(), Some(r.field_players[1].player.clone()));
+        Ok(())
+    }
+
+    #[test]
+    fn test_trick_array() -> Result<()> {
+        let mut trick = Trick::new();
+        assert_eq!(trick.array().is_err(), true);
+
+        let players = get_dummy_players();
+        let r = Round::new(players.clone());
+        for p in r.field_players.iter() {
+            trick.add(Play::new(p.player.clone(), p.hands[0].clone()));
+        }
+
+        for (t, p) in zip(trick.array()?, r.field_players.iter()) {
+            assert_eq!(t.player, p.player);
+            assert_eq!(t.card, p.hands[0]);
+        }
+        Ok(())
     }
 }
