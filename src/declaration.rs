@@ -1,9 +1,8 @@
 use crate::card::{Card, Suit};
-use crate::cards::GameCards;
-use crate::player::{FieldPlayer, FieldPlayers, Player, Role};
-use anyhow::{bail, Result};
+use crate::game::Round;
+use crate::player::{FieldPlayer, FieldPlayers, Role};
+use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
-use std::convert::TryInto;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Declaration {
@@ -15,47 +14,41 @@ pub struct Declaration {
 
 impl Declaration {
     #[allow(dead_code)]
-    fn new(
-        napoleon: Player,
-        others: [Player; 4],
-        cards: GameCards,
+    pub fn new(
+        napoleon: FieldPlayer,
+        players: &mut FieldPlayers,
         suit: Option<Suit>,
         number: usize,
         aide: Card,
     ) -> Result<Self> {
-        let aide_player = if let Some(i) = cards.hands.iter().position(|h| h.has(&aide)) {
-            cards.hands[i].player.clone()
-        } else if cards.opens.iter().any(|c| *c == aide) {
-            napoleon.clone()
-        } else {
-            bail!("not found aide")
-        };
-
-        let mut players: Vec<FieldPlayer> = others
-            .iter()
-            .map(|p| FieldPlayer {
-                player: p.clone(),
-                role: if *p == aide_player {
-                    Role::Aide
-                } else {
-                    Role::Union
-                },
-            })
-            .collect::<Vec<FieldPlayer>>();
-        players.push(FieldPlayer {
-            player: napoleon,
-            role: Role::Napoleon,
-        });
+        for p in players.into_iter() {
+            if *p == napoleon {
+                p.assign_role(Role::Napoleon);
+            } else if p.has(&aide) {
+                p.assign_role(Role::Aide);
+            } else {
+                p.assign_role(Role::Union);
+            }
+        }
+        ensure!(
+            !players.into_iter().any(|p| p.role == Some(Role::Napoleon)),
+            "Napoleon is not found"
+        );
         Ok(Declaration {
-            players: players.try_into().unwrap(),
+            players: players.clone(),
             suit,
             number,
             aide,
         })
     }
 
+    #[allow(dead_code)]
+    pub fn create_round(self) -> Round {
+        Round::new(self)
+    }
+
     fn is_alone(&self) -> bool {
-        self.players.iter().any(|p| p.role == Role::Aide)
+        self.players.iter().any(|p| p.role == Some(Role::Aide))
     }
 
     #[allow(dead_code)]

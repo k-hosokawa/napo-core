@@ -1,6 +1,6 @@
-mod card;
-mod cards;
-mod declaration;
-mod game;
-mod player;
-mod trick;
+pub mod card;
+pub mod cards;
+pub mod declaration;
+pub mod game;
+pub mod player;
+pub mod trick;

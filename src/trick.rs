@@ -10,6 +10,13 @@ pub struct Play {
     card: Card,
 }
 
+impl Play {
+    #[allow(dead_code)]
+    pub fn new(player: FieldPlayer, card: Card) -> Self {
+        Play { player, card }
+    }
+}
+
 type Trick = [Play; 5];
 
 struct TrickResultBuilder {
@@ -40,7 +47,7 @@ impl TrickResultBuilder {
 }
 
 #[allow(dead_code)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TrickResult {
     pub trick: Trick,
     pub winner: FieldPlayer,
@@ -112,7 +119,9 @@ impl TrickResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::player::{Player, Role};
+    use crate::player::{get_dummy_players, FieldPlayer, FieldPlayers, Player, Role};
+    use rand::seq::SliceRandom;
+    use rand::thread_rng;
     use serde_json::json;
     use std::convert::TryInto;
 
@@ -121,6 +130,7 @@ mod tests {
 
     #[allow(dead_code)]
     fn get_trick(ids: &FieldCardIds) -> Trick {
+        let players = get_dummy_players();
         let roles = [
             Role::Napoleon,
             Role::Aide,
@@ -128,18 +138,33 @@ mod tests {
             Role::Union,
             Role::Union,
         ];
-        ids.iter()
+
+        let all_cards: Vec<u8> = (1..53).collect();
+        let mut all_cards: Vec<u8> = all_cards
+            .into_iter()
+            .filter(|c| !ids.iter().any(|g| g == c))
+            .collect();
+        all_cards.shuffle(&mut thread_rng());
+        let field_players: FieldPlayers = players
+            .into_iter()
             .enumerate()
-            .map(|(i, c)| Play {
-                player: FieldPlayer {
-                    player: Player { id: i.to_string() },
-                    role: roles[i].clone(),
-                },
-                card: Card::from_id(*c).unwrap(),
+            .map(|(pid, p)| {
+                let mut hands: Vec<Card> = (0..9)
+                    .map(|i| Card::from_id(all_cards[(pid * 9) + i]).unwrap())
+                    .collect::<Vec<Card>>()
+                    .try_into()
+                    .unwrap();
+                hands.push(Card::from_id(ids[pid]).unwrap());
+                FieldPlayer {
+                    player: p,
+                    role: Some(roles[pid].clone()),
+                    hands: hands.try_into().unwrap(),
+                }
             })
-            .collect::<Vec<Play>>()
+            .collect::<Vec<FieldPlayer>>()
             .try_into()
-            .unwrap()
+            .unwrap();
+        field_players.map(|p| Play::new(p.clone(), p.hands[9].clone()))
     }
 
     #[test]
@@ -154,7 +179,7 @@ mod tests {
         let v: FieldCardIds = [1, 4, 24, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 1)?;
-        assert_eq!(r.winner.player.id, "0");
+        assert_eq!(r.winner.player.id, "a");
         assert_eq!(
             r.face_cards,
             vec![
@@ -172,7 +197,7 @@ mod tests {
         let v: FieldCardIds = [1, 4, 25, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 1)?;
-        assert_eq!(r.winner.player.id, "2");
+        assert_eq!(r.winner.player.id, "c");
         assert_eq!(
             r.face_cards,
             vec![
@@ -190,7 +215,7 @@ mod tests {
         let v: FieldCardIds = [2, 11, 24, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, Some(Suit::Spade), 1)?;
-        assert_eq!(r.winner.player.id, "1");
+        assert_eq!(r.winner.player.id, "b");
         assert_eq!(
             r.face_cards,
             vec![
@@ -208,7 +233,7 @@ mod tests {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, Some(Suit::Spade), 1)?;
-        assert_eq!(r.winner.player.id, "4");
+        assert_eq!(r.winner.player.id, "e");
         assert_eq!(
             r.face_cards,
             vec![Card::from_id(24)?, Card::from_id(40)?, Card::from_id(50)?,],
@@ -222,11 +247,11 @@ mod tests {
 
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 2)?;
-        assert_eq!(r.winner.player.id, "0");
+        assert_eq!(r.winner.player.id, "a");
         assert_eq!(r.face_cards, Vec::<Card>::new(),);
 
         let r = TrickResult::new(&t, None, 1)?;
-        assert_eq!(r.winner.player.id, "4");
+        assert_eq!(r.winner.player.id, "e");
         assert_eq!(r.face_cards, Vec::<Card>::new(),);
         Ok(())
     }

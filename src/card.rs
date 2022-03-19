@@ -108,6 +108,8 @@ impl Card {
     }
 }
 
+pub type Hands = [Card; 10];
+
 #[cfg(test)]
 mod tests {
     use super::*;
