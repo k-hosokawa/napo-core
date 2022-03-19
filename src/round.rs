@@ -2,7 +2,7 @@ use crate::card::Card;
 use crate::cards::distribute_cards;
 use crate::declaration::Declaration;
 use crate::player::{FieldPlayers, Player, Players, Role};
-use crate::trick::TrickResult;
+use crate::trick_result::TrickResult;
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -147,7 +147,7 @@ impl Round {
 mod tests {
     use super::*;
     use crate::player::get_dummy_players;
-    use crate::trick::{Play, Trick, TrickArray, TrickResult};
+    use crate::trick::{Play, Trick, TrickArray};
 
     #[test]
     fn test_round_new() {
