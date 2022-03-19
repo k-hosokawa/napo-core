@@ -1,38 +1,31 @@
-use crate::card::{Card, Hands};
-use crate::player::Players;
+use crate::card::Card;
+use crate::player::{FieldPlayer, FieldPlayers, Players};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use std::convert::TryInto;
 
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct GameCards {
-    pub hands: [Hands; 5],
-    pub opens: [Card; 2],
-}
+pub fn distribute_cards(players: &Players) -> (FieldPlayers, [Card; 2]) {
+    let mut v: Vec<u8> = (1..53).collect();
+    v.shuffle(&mut thread_rng());
+    let players: FieldPlayers = players
+        .iter()
+        .enumerate()
+        .map(|(pid, p)| {
+            FieldPlayer::new(
+                p.clone(),
+                (0..10)
+                    .map(|i| Card::from_id(v[(pid * 10) + i]).unwrap())
+                    .collect::<Vec<Card>>()
+                    .try_into()
+                    .unwrap(),
+            )
+        })
+        .collect::<Vec<FieldPlayer>>()
+        .try_into()
+        .unwrap();
+    let opens = [Card::from_id(v[50]).unwrap(), Card::from_id(v[51]).unwrap()];
 
-impl GameCards {
-    #[allow(dead_code)]
-    pub fn new(players: Players) -> Self {
-        let mut v: Vec<u8> = (1..53).collect();
-        v.shuffle(&mut thread_rng());
-        GameCards {
-            hands: players
-                .iter()
-                .enumerate()
-                .map(|(pid, _)| {
-                    (0..10)
-                        .map(|i| Card::from_id(v[(pid * 10) + i]).unwrap())
-                        .collect::<Vec<Card>>()
-                        .try_into()
-                        .unwrap()
-                })
-                .collect::<Vec<Hands>>()
-                .try_into()
-                .unwrap(),
-            opens: [Card::from_id(v[50]).unwrap(), Card::from_id(v[51]).unwrap()],
-        }
-    }
+    (players, opens)
 }
 
 #[cfg(test)]
@@ -43,14 +36,18 @@ mod tests {
 
     #[test]
     fn test_distribute() {
-        let cards = GameCards::new(get_dummy_players());
+        let (field_players, opens) = distribute_cards(&get_dummy_players());
 
         let mut s = HashSet::new();
-        cards.hands.map(|h| {
-            h.map(|c| {
+        field_players.map(|p| {
+            p.hands.map(|c| {
                 assert_eq!(s.contains(&c), false);
                 s.insert(c.clone());
             })
+        });
+        opens.map(|c| {
+            assert_eq!(s.contains(&c), false);
+            s.insert(c.clone());
         });
     }
 }

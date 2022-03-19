@@ -1,40 +1,72 @@
 use crate::card::{Card, Suit};
-use crate::player::FieldPlayer;
-use anyhow::Result;
+use crate::player::{FieldPlayer, Player};
+use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
+use std::convert::TryInto;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Play {
-    player: FieldPlayer,
+    player: Player,
     card: Card,
 }
 
 impl Play {
     #[allow(dead_code)]
     pub fn new(player: FieldPlayer, card: Card) -> Self {
-        Play { player, card }
+        Play {
+            player: player.player,
+            card,
+        }
     }
 }
 
-type Trick = [Play; 5];
+#[derive(Debug)]
+pub struct Trick {
+    plays: Vec<Play>,
+}
+
+impl Trick {
+    #[allow(dead_code)]
+    pub fn new() -> Self {
+        Trick { plays: Vec::new() }
+    }
+
+    #[allow(dead_code)]
+    pub fn add(&mut self, play: Play) {
+        self.plays.push(play);
+    }
+
+    #[allow(dead_code)]
+    pub fn last_player(&self) -> Option<Player> {
+        Some(self.plays.last()?.player.clone())
+    }
+
+    pub(crate) fn array(&self) -> Result<[Play; 5]> {
+        ensure!(self.plays.len() == 5, "This Trick is not finished yet");
+        Ok(self.plays.clone().try_into().unwrap())
+    }
+}
+
+pub type TrickArray = [Play; 5];
 
 struct TrickResultBuilder {
-    trick: Trick,
+    trick: TrickArray,
     face_cards: Vec<Card>,
 }
 
 impl TrickResultBuilder {
-    fn new(trick: &Trick) -> Self {
+    fn new(trick: &Trick) -> Result<Self> {
         let face_cards: Vec<Card> = trick
+            .plays
             .iter()
             .filter(|p| p.card.is_face())
             .map(|p| p.card.clone())
             .collect();
-        TrickResultBuilder {
-            trick: (*trick).clone(),
+        Ok(TrickResultBuilder {
+            trick: (*trick).array()?,
             face_cards,
-        }
+        })
     }
 
     fn build(&self, winner_id: usize) -> Result<TrickResult> {
@@ -49,15 +81,15 @@ impl TrickResultBuilder {
 #[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TrickResult {
-    pub trick: Trick,
-    pub winner: FieldPlayer,
+    pub trick: TrickArray,
+    pub winner: Player,
     pub face_cards: Vec<Card>,
 }
 
 impl TrickResult {
     #[allow(dead_code)]
     pub fn new(trick: &Trick, suit: Option<Suit>, n_round: u8) -> Result<Self> {
-        let builder = TrickResultBuilder::new(trick);
+        let builder = TrickResultBuilder::new(trick)?;
 
         // almighty
         if let Some(id) = builder.trick.iter().position(|c| c.card.is_almighty()) {
@@ -145,6 +177,7 @@ mod tests {
             .filter(|c| !ids.iter().any(|g| g == c))
             .collect();
         all_cards.shuffle(&mut thread_rng());
+
         let field_players: FieldPlayers = players
             .into_iter()
             .enumerate()
@@ -164,7 +197,11 @@ mod tests {
             .collect::<Vec<FieldPlayer>>()
             .try_into()
             .unwrap();
-        field_players.map(|p| Play::new(p.clone(), p.hands[9].clone()))
+        let mut trick = Trick::new();
+        for p in field_players {
+            trick.add(Play::new(p.clone(), p.hands[9].clone()));
+        }
+        trick
     }
 
     #[test]
@@ -179,7 +216,7 @@ mod tests {
         let v: FieldCardIds = [1, 4, 24, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 1)?;
-        assert_eq!(r.winner.player.id, "a");
+        assert_eq!(r.winner.id, "a");
         assert_eq!(
             r.face_cards,
             vec![
@@ -197,7 +234,7 @@ mod tests {
         let v: FieldCardIds = [1, 4, 25, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 1)?;
-        assert_eq!(r.winner.player.id, "c");
+        assert_eq!(r.winner.id, "c");
         assert_eq!(
             r.face_cards,
             vec![
@@ -215,7 +252,7 @@ mod tests {
         let v: FieldCardIds = [2, 11, 24, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, Some(Suit::Spade), 1)?;
-        assert_eq!(r.winner.player.id, "b");
+        assert_eq!(r.winner.id, "b");
         assert_eq!(
             r.face_cards,
             vec![
@@ -233,7 +270,7 @@ mod tests {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, Some(Suit::Spade), 1)?;
-        assert_eq!(r.winner.player.id, "e");
+        assert_eq!(r.winner.id, "e");
         assert_eq!(
             r.face_cards,
             vec![Card::from_id(24)?, Card::from_id(40)?, Card::from_id(50)?,],
@@ -247,11 +284,11 @@ mod tests {
 
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 2)?;
-        assert_eq!(r.winner.player.id, "a");
+        assert_eq!(r.winner.id, "a");
         assert_eq!(r.face_cards, Vec::<Card>::new(),);
 
         let r = TrickResult::new(&t, None, 1)?;
-        assert_eq!(r.winner.player.id, "e");
+        assert_eq!(r.winner.id, "e");
         assert_eq!(r.face_cards, Vec::<Card>::new(),);
         Ok(())
     }
@@ -269,9 +306,9 @@ mod tests {
     #[ignore]
     fn test_from_json() -> Result<()> {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
-        let trick = get_trick(&v);
+        let trick = get_trick(&v).array()?;
         let winner = Player {
-            id: "4".to_string(),
+            id: "e".to_string(),
         };
         let face_cards: [u8; 3] = [4, 24, 50];
         let j = json!({
@@ -286,7 +323,7 @@ mod tests {
         for i in 0..3 {
             assert_eq!(r.face_cards[i].to_id(), face_cards[i]);
         }
-        assert_eq!(r.winner.player, winner);
+        assert_eq!(r.winner, winner);
         Ok(())
     }
 }
