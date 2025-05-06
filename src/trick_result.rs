@@ -15,7 +15,7 @@ impl TrickResultBuilder {
             .plays
             .iter()
             .filter(|p| p.card.is_face())
-            .map(|p| p.card.clone())
+            .map(|p| p.card)
             .collect();
         Ok(TrickResultBuilder {
             trick: (*trick).array()?,
@@ -77,7 +77,7 @@ impl TrickResult {
             }
         }
 
-        let first_suit = builder.trick[0].card.suit.clone();
+        let first_suit = builder.trick[0].card.suit;
 
         // same2
         if n_round > 1 && (builder.trick.iter().all(|c| c.card.suit == first_suit)) {
@@ -152,7 +152,7 @@ mod tests {
             .unwrap();
         let mut trick = Trick::new();
         for p in field_players {
-            trick.add(Play::new(p.player.clone(), p.hands[9].clone()));
+            trick.add(Play::new(p.player.clone(), p.hands[9]));
         }
         trick
     }

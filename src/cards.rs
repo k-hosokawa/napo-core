@@ -46,12 +46,12 @@ mod tests {
         field_players.map(|p| {
             p.hands.map(|c| {
                 assert!(!s.contains(&c));
-                s.insert(c.clone());
+                s.insert(c);
             })
         });
         opens.map(|c| {
             assert!(!s.contains(&c));
-            s.insert(c.clone());
+            s.insert(c);
         });
     }
 }

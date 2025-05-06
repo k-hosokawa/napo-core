@@ -189,7 +189,7 @@ mod tests {
             r.field_players[0].player.clone(),
             None,
             13,
-            r.field_players[0].hands[0].clone(),
+            r.field_players[0].hands[0],
         )?;
         r.set_declaration(d)?;
         assert!(r.is_alone());
@@ -199,7 +199,7 @@ mod tests {
             r.field_players[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0].clone(),
+            r.field_players[1].hands[0],
         )?;
         r.set_declaration(d)?;
         assert!(!r.is_alone());
@@ -209,7 +209,7 @@ mod tests {
     fn dummy_trick(field_players: FieldPlayers, i: usize) -> TrickArray {
         let mut trick = Trick::new();
         for p in field_players {
-            trick.add(Play::new(p.player.clone(), p.hands[i].clone()));
+            trick.add(Play::new(p.player.clone(), p.hands[i]));
         }
         trick.array().unwrap()
     }
@@ -222,7 +222,7 @@ mod tests {
             r.field_players[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0].clone(),
+            r.field_players[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -247,7 +247,7 @@ mod tests {
             r.field_players[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0].clone(),
+            r.field_players[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -286,7 +286,7 @@ mod tests {
             r.field_players[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0].clone(),
+            r.field_players[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -330,7 +330,7 @@ mod tests {
             r.field_players[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0].clone(),
+            r.field_players[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -364,7 +364,7 @@ mod tests {
             r.field_players[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0].clone(),
+            r.field_players[1].hands[0],
         )?;
         r.set_declaration(d)?;
         assert_eq!(r.last_winner().unwrap(), r.field_players[0].player.clone());
