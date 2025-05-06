@@ -13,7 +13,7 @@ impl Default for Player {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Players(pub [Player; 5]);
 
 impl Default for Players {
@@ -83,4 +83,24 @@ impl FieldPlayer {
     }
 }
 
-pub type FieldPlayers = [FieldPlayer; 5];
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub struct FieldPlayers(pub [FieldPlayer; 5]);
+
+impl From<FieldPlayers> for Vec<FieldPlayer> {
+    fn from(players: FieldPlayers) -> Self {
+        players.0.to_vec()
+    }
+}
+
+impl From<Vec<FieldPlayer>> for FieldPlayers {
+    fn from(players: Vec<FieldPlayer>) -> Self {
+        FieldPlayers(players.try_into().unwrap())
+    }
+}
+
+impl FieldPlayers {
+    pub fn isolated(&self) -> bool {
+        // 一人立ち。aideがいない。
+        self.0.iter().filter(|p| p.role == Role::Aide).count() == 0
+    }
+}

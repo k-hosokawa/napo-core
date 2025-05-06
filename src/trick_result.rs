@@ -143,10 +143,9 @@ mod tests {
                 }
             })
             .collect::<Vec<crate::player::FieldPlayer>>()
-            .try_into()
-            .unwrap();
+            .into();
         let mut trick = Trick::new();
-        for p in field_players {
+        for p in field_players.0 {
             trick.add(Play::new(p.player.clone(), p.hands[9]));
         }
         trick

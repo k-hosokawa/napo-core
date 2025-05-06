@@ -39,7 +39,7 @@ impl Round {
     pub fn set_declaration(&mut self, declaration: Declaration) -> anyhow::Result<()> {
         anyhow::ensure!(self.declaration.is_none(), "Napoleon is already set");
 
-        for p in self.field_players.iter_mut() {
+        for p in self.field_players.0.iter_mut() {
             if p.player == declaration.napoleon {
                 p.assign_role(Role::Napoleon);
             } else if p.has(&declaration.aide) {
@@ -47,7 +47,10 @@ impl Round {
             }
         }
         anyhow::ensure!(
-            self.field_players.iter().any(|p| p.role == Role::Napoleon),
+            self.field_players
+                .0
+                .iter()
+                .any(|p| p.role == Role::Napoleon),
             "Napoleon is not found"
         );
         self.declaration = Some(declaration);
@@ -56,7 +59,7 @@ impl Round {
 
     #[allow(dead_code)]
     fn is_alone(&self) -> bool {
-        !self.field_players.iter().any(|p| p.role == Role::Aide)
+        !self.field_players.0.iter().any(|p| p.role == Role::Aide)
     }
 
     #[allow(dead_code)]
@@ -65,6 +68,7 @@ impl Round {
             Some(r) => r.winner.clone(),
             None => self
                 .field_players
+                .0
                 .iter()
                 .find(|p| p.role == Role::Napoleon)
                 .context("napoleon is not found")?
@@ -92,6 +96,7 @@ impl Round {
             let s = face_cards.len();
             let role = self
                 .field_players
+                .0
                 .iter()
                 .find(|p| p.player == *player)
                 .unwrap()
@@ -177,20 +182,20 @@ mod tests {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
-            r.field_players[0].player.clone(),
+            r.field_players.0[0].player.clone(),
             None,
             13,
-            r.field_players[0].hands[0],
+            r.field_players.0[0].hands[0],
         )?;
         r.set_declaration(d)?;
         assert!(r.is_alone());
 
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
-            r.field_players[0].player.clone(),
+            r.field_players.0[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0],
+            r.field_players.0[1].hands[0],
         )?;
         r.set_declaration(d)?;
         assert!(!r.is_alone());
@@ -199,7 +204,7 @@ mod tests {
 
     fn dummy_trick(field_players: FieldPlayers, i: usize) -> TrickArray {
         let mut trick = Trick::new();
-        for p in field_players {
+        for p in field_players.0 {
             trick.add(Play::new(p.player.clone(), p.hands[i]));
         }
         trick.array().unwrap()
@@ -210,10 +215,10 @@ mod tests {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
-            r.field_players[0].player.clone(),
+            r.field_players.0[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0],
+            r.field_players.0[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -235,10 +240,10 @@ mod tests {
         assert!(r.team_score().is_err());
 
         let d = Declaration::new(
-            r.field_players[0].player.clone(),
+            r.field_players.0[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0],
+            r.field_players.0[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -274,10 +279,10 @@ mod tests {
         assert!(r.winner().is_err());
 
         let d = Declaration::new(
-            r.field_players[0].player.clone(),
+            r.field_players.0[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0],
+            r.field_players.0[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -318,10 +323,10 @@ mod tests {
         assert!(r.winner().is_err());
 
         let d = Declaration::new(
-            r.field_players[0].player.clone(),
+            r.field_players.0[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0],
+            r.field_players.0[1].hands[0],
         )?;
         r.set_declaration(d)?;
 
@@ -352,20 +357,26 @@ mod tests {
         assert!(r.last_winner().is_err());
 
         let d = Declaration::new(
-            r.field_players[0].player.clone(),
+            r.field_players.0[0].player.clone(),
             None,
             13,
-            r.field_players[1].hands[0],
+            r.field_players.0[1].hands[0],
         )?;
         r.set_declaration(d)?;
-        assert_eq!(r.last_winner().unwrap(), r.field_players[0].player.clone());
+        assert_eq!(
+            r.last_winner().unwrap(),
+            r.field_players.0[0].player.clone()
+        );
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[2].clone(),
             face_cards: vec![Card::try_from(1)?],
         });
-        assert_eq!(r.last_winner().unwrap(), r.field_players[2].player.clone());
+        assert_eq!(
+            r.last_winner().unwrap(),
+            r.field_players.0[2].player.clone()
+        );
         Ok(())
     }
 }

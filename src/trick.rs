@@ -62,8 +62,8 @@ mod tests {
         let players = crate::player::Players::default();
         let r = Round::new(players.clone());
         trick.add(Play::new(
-            r.field_players[0].player.clone(),
-            r.field_players[0].hands[0],
+            r.field_players.0[0].player.clone(),
+            r.field_players.0[0].hands[0],
         ));
 
         Ok(())
@@ -77,16 +77,22 @@ mod tests {
         let players = crate::player::Players::default();
         let r = Round::new(players.clone());
         trick.add(Play::new(
-            r.field_players[0].player.clone(),
-            r.field_players[0].hands[0],
+            r.field_players.0[0].player.clone(),
+            r.field_players.0[0].hands[0],
         ));
-        assert_eq!(trick.last_player(), Some(r.field_players[0].player.clone()));
+        assert_eq!(
+            trick.last_player(),
+            Some(r.field_players.0[0].player.clone())
+        );
 
         trick.add(Play::new(
-            r.field_players[1].player.clone(),
-            r.field_players[1].hands[0],
+            r.field_players.0[1].player.clone(),
+            r.field_players.0[1].hands[0],
         ));
-        assert_eq!(trick.last_player(), Some(r.field_players[1].player.clone()));
+        assert_eq!(
+            trick.last_player(),
+            Some(r.field_players.0[1].player.clone())
+        );
         Ok(())
     }
 
@@ -97,11 +103,11 @@ mod tests {
 
         let players = crate::player::Players::default();
         let r = Round::new(players.clone());
-        for p in r.field_players.iter() {
+        for p in r.field_players.0.iter() {
             trick.add(Play::new(p.player.clone(), p.hands[0]));
         }
 
-        for (t, p) in std::iter::zip(trick.array()?, r.field_players.iter()) {
+        for (t, p) in std::iter::zip(trick.array()?, r.field_players.0.iter()) {
             assert_eq!(t.player, p.player);
             assert_eq!(t.card, p.hands[0]);
         }

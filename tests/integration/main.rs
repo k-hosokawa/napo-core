@@ -13,14 +13,14 @@ fn game() -> anyhow::Result<()> {
     let round = game.new_round();
 
     // プレイヤー0がナポレオンになります
-    let napoleon = round.field_players[0].player.clone();
+    let napoleon = round.field_players.0[0].player.clone();
 
     // 立ちを決めます
     let suit = napo::card::Suit::Spade;
     let number = 15;
 
     // 副官を指名します
-    let aide_card = round.field_players[1].hands[0];
+    let aide_card = round.field_players.0[1].hands[0];
 
     // 立ちを宣言します
     let declaration = napo::declaration::Declaration::new(napoleon, Some(suit), number, aide_card)?;

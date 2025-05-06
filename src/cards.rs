@@ -41,7 +41,7 @@ mod tests {
         let (field_players, opens) = distribute_cards(&players);
 
         let mut s = HashSet::new();
-        field_players.map(|p| {
+        field_players.0.map(|p| {
             p.hands.map(|c| {
                 assert!(!s.contains(&c));
                 s.insert(c);
