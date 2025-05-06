@@ -109,115 +109,76 @@ pub type Hands = [Card; 10];
 mod tests {
     use super::*;
 
+    #[rstest::rstest]
     #[test]
-    fn test_trump_from_id() -> anyhow::Result<()> {
-        let t = Card::try_from(1)?;
-        assert_eq!(t.number, 1);
-        assert_eq!(t.suit, Suit::Spade);
-
-        let t = Card::try_from(53);
-        assert!(t.is_err());
-
-        let t = Card::try_from(36)?;
-        assert_eq!(t.number, 10);
-        assert_eq!(t.suit, Suit::Diamond);
-
-        let t = Card::try_from(52)?;
-        assert_eq!(t.number, 13);
-        assert_eq!(t.suit, Suit::Club);
-
+    #[case(1, 1, Suit::Spade)]
+    #[case(36, 10, Suit::Diamond)]
+    #[case(52, 13, Suit::Club)]
+    fn test_trump_from_id(
+        #[case] id: u8,
+        #[case] number: u8,
+        #[case] suit: Suit,
+    ) -> anyhow::Result<()> {
+        let t = Card::try_from(id)?;
+        assert_eq!(t.number, number);
+        assert_eq!(t.suit, suit);
         Ok(())
     }
 
     #[test]
-    fn test_trump_to_id() {
-        let t = Card {
-            number: 1,
-            suit: Suit::Spade,
-        };
-        assert_eq!(u8::from(t), 1);
-
-        let t = Card {
-            number: 10,
-            suit: Suit::Club,
-        };
-        assert_eq!(u8::from(t), 49);
-
-        let t = Card {
-            number: 13,
-            suit: Suit::Diamond,
-        };
-        assert_eq!(u8::from(t), 39);
+    fn test_trump_from_id_error() -> anyhow::Result<()> {
+        let t = Card::try_from(53);
+        assert!(t.is_err());
+        Ok(())
     }
 
+    #[rstest::rstest]
     #[test]
-    fn test_is_almighty() {
-        let almighty = Card {
-            number: 1,
-            suit: Suit::Spade,
-        };
-        assert!(almighty.is_almighty());
-
-        let normal = Card {
-            number: 3,
-            suit: Suit::Spade,
-        };
-        assert!(!normal.is_almighty());
+    #[case(Card { number: 1, suit: Suit::Spade }, 1)]
+    #[case(Card { number: 10, suit: Suit::Club }, 49)]
+    #[case(Card { number: 13, suit: Suit::Diamond }, 39)]
+    fn test_trump_to_id(#[case] card: Card, #[case] id: u8) {
+        assert_eq!(u8::from(card), id);
     }
 
+    #[rstest::rstest]
     #[test]
-    fn test_is_yoromeki() {
-        let almighty = Card {
-            number: 12,
-            suit: Suit::Heart,
-        };
-        assert!(almighty.is_yoromeki());
-
-        let normal = Card {
-            number: 3,
-            suit: Suit::Spade,
-        };
-        assert!(!normal.is_yoromeki());
+    #[case(Card { number: 1, suit: Suit::Spade }, true)]
+    #[case(Card { number: 3, suit: Suit::Spade }, false)]
+    fn test_is_almighty(#[case] card: Card, #[case] is_almighty: bool) {
+        assert_eq!(card.is_almighty(), is_almighty);
     }
 
+    #[rstest::rstest]
     #[test]
-    fn test_trump_to_json() {
-        let t = Card {
-            number: 2,
-            suit: Suit::Heart,
-        };
-        assert_eq!(serde_json::to_string(&t).unwrap(), "15");
+    #[case(Card { number: 12, suit: Suit::Heart }, true)]
+    #[case(Card { number: 3, suit: Suit::Spade }, false)]
+    fn test_is_yoromeki(#[case] card: Card, #[case] is_yoromeki: bool) {
+        assert_eq!(card.is_yoromeki(), is_yoromeki);
     }
 
+    #[rstest::rstest]
     #[test]
-    fn test_json_to_trumps() -> anyhow::Result<()> {
-        let j = "[1, 2, 30, 4, 52]";
-        let trumps: Vec<Card> = serde_json::from_str(j)?;
-        let answers = [
-            Card {
-                number: 1,
-                suit: Suit::Spade,
-            },
-            Card {
-                number: 2,
-                suit: Suit::Spade,
-            },
-            Card {
-                number: 4,
-                suit: Suit::Diamond,
-            },
-            Card {
-                number: 4,
-                suit: Suit::Spade,
-            },
-            Card {
-                number: 13,
-                suit: Suit::Club,
-            },
-        ];
-        for i in 0..5 {
-            assert_eq!(trumps[i], answers[i]);
-        }
+    #[case(Card { number: 1, suit: Suit::Spade }, true)]
+    #[case(Card { number: 10, suit: Suit::Club }, true)]
+    #[case(Card { number: 13, suit: Suit::Diamond }, true)]
+    #[case(Card { number: 2, suit: Suit::Spade }, false)]
+    fn test_is_face(#[case] card: Card, #[case] is_face: bool) {
+        assert_eq!(card.is_face(), is_face);
+    }
+
+    #[rstest::rstest]
+    #[test]
+    #[case(Card { number: 2, suit: Suit::Heart }, "15")]
+    fn test_trump_to_json(#[case] card: Card, #[case] json: &str) {
+        assert_eq!(serde_json::to_string(&card).unwrap(), json);
+    }
+
+    #[rstest::rstest]
+    #[test]
+    #[case("[1,2,30,4,52]", [Card { number: 1, suit: Suit::Spade }, Card { number: 2, suit: Suit::Spade }, Card { number: 4, suit: Suit::Diamond }, Card { number: 4, suit: Suit::Spade }, Card { number: 13, suit: Suit::Club }])]
+    fn test_json_to_trumps(#[case] json: &str, #[case] trumps: [Card; 5]) -> anyhow::Result<()> {
+        assert_eq!(json, serde_json::to_string(&trumps)?);
         Ok(())
     }
 }
