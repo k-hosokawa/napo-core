@@ -6,7 +6,7 @@ use serde::{Deserialize as serdeDeserialize, Serialize as serdeSerialize};
 use std::fmt;
 use std::result::Result as stdResult;
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash, serdeSerialize, serdeDeserialize, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, serdeSerialize, serdeDeserialize, Default)]
 pub enum Suit {
     #[default]
     Spade,
@@ -26,7 +26,7 @@ impl Suit {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Card {
     pub number: u8,
     pub suit: Suit,
@@ -37,7 +37,7 @@ impl Serialize for Card {
     where
         S: Serializer,
     {
-        serializer.serialize_u8(self.to_id())
+        serializer.serialize_u8(u8::try_from(*self).unwrap())
     }
 }
 
@@ -53,7 +53,7 @@ impl Visitor<'_> for CardVisitor {
     where
         E: de::Error,
     {
-        Card::from_id(value as u8).map_err(|e| E::custom(e))
+        Card::try_from(value as u8).map_err(|e| E::custom(e))
     }
 }
 
@@ -66,8 +66,10 @@ impl<'de> Deserialize<'de> for Card {
     }
 }
 
-impl Card {
-    pub fn from_id(id: u8) -> Result<Self> {
+impl TryFrom<u8> for Card {
+    type Error = anyhow::Error;
+
+    fn try_from(id: u8) -> Result<Self> {
         ensure!((1..=52).contains(&id), "invalid id \"{}\"", id);
         let number = ((id - 1) % 13) + 1;
         let suit = match (id - 1) / 13 {
@@ -79,17 +81,23 @@ impl Card {
         };
         Ok(Card { number, suit })
     }
+}
 
-    pub fn to_id(&self) -> u8 {
-        let suit_num: u8 = match self.suit {
+impl TryFrom<Card> for u8 {
+    type Error = anyhow::Error;
+
+    fn try_from(card: Card) -> Result<Self> {
+        let suit_num: u8 = match card.suit {
             Suit::Spade => 0,
             Suit::Heart => 1,
             Suit::Diamond => 2,
             Suit::Club => 3,
         };
-        (suit_num * 13) + self.number
+        Ok((suit_num * 13) + card.number)
     }
+}
 
+impl Card {
     pub fn is_almighty(&self) -> bool {
         (self.number == 1) && (self.suit == Suit::Spade)
     }
@@ -112,18 +120,18 @@ mod tests {
 
     #[test]
     fn test_trump_from_id() -> Result<()> {
-        let t = Card::from_id(1)?;
+        let t = Card::try_from(1)?;
         assert_eq!(t.number, 1);
         assert_eq!(t.suit, Suit::Spade);
 
-        let t = Card::from_id(53);
+        let t = Card::try_from(53);
         assert!(t.is_err());
 
-        let t = Card::from_id(36)?;
+        let t = Card::try_from(36)?;
         assert_eq!(t.number, 10);
         assert_eq!(t.suit, Suit::Diamond);
 
-        let t = Card::from_id(52)?;
+        let t = Card::try_from(52)?;
         assert_eq!(t.number, 13);
         assert_eq!(t.suit, Suit::Club);
 
@@ -136,19 +144,19 @@ mod tests {
             number: 1,
             suit: Suit::Spade,
         };
-        assert_eq!(t.to_id(), 1);
+        assert_eq!(u8::try_from(t).unwrap(), 1);
 
         let t = Card {
             number: 10,
             suit: Suit::Club,
         };
-        assert_eq!(t.to_id(), 49);
+        assert_eq!(u8::try_from(t).unwrap(), 49);
 
         let t = Card {
             number: 13,
             suit: Suit::Diamond,
         };
-        assert_eq!(t.to_id(), 39);
+        assert_eq!(u8::try_from(t).unwrap(), 39);
     }
 
     #[test]

@@ -22,7 +22,7 @@ fn game() -> Result<()> {
     let number = 15;
 
     // 副官を指名します
-    let aide_card = round.field_players[1].hands[0].clone();
+    let aide_card = round.field_players[1].hands[0];
 
     // 立ちを宣言します
     let declaration = napo::declaration::Declaration::new(napoleon, Some(suit), number, aide_card)?;

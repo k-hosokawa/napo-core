@@ -41,7 +41,7 @@ mod tests {
             },
             None,
             13,
-            Card::from_id(1)?,
+            Card::try_from(1)?,
         )?;
         Ok(())
     }
@@ -54,9 +54,16 @@ mod tests {
             },
             None,
             12,
-            Card::from_id(1)?,
+            Card::try_from(1)?,
         )
         .is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn declaration_base_score() -> Result<()> {
+        let d = Declaration::new(Player::default(), None, 13, Card::try_from(1)?)?;
+        assert_eq!(d.base_score(), 1);
         Ok(())
     }
 }

@@ -6,6 +6,14 @@ pub struct Player {
     pub id: String,
 }
 
+impl Default for Player {
+    fn default() -> Self {
+        Self {
+            id: "a".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Players(pub [Player; 5]);
 

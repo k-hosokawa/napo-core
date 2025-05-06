@@ -15,7 +15,7 @@ pub fn distribute_cards(players: &Players) -> (FieldPlayers, [Card; 2]) {
             FieldPlayer::new(
                 p.clone(),
                 (0..10)
-                    .map(|i| Card::from_id(v[(pid * 10) + i]).unwrap())
+                    .map(|i| Card::try_from(v[(pid * 10) + i]).unwrap())
                     .collect::<Vec<Card>>()
                     .try_into()
                     .unwrap(),
@@ -24,7 +24,10 @@ pub fn distribute_cards(players: &Players) -> (FieldPlayers, [Card; 2]) {
         .collect::<Vec<FieldPlayer>>()
         .try_into()
         .unwrap();
-    let opens = [Card::from_id(v[50]).unwrap(), Card::from_id(v[51]).unwrap()];
+    let opens = [
+        Card::try_from(v[50]).unwrap(),
+        Card::try_from(v[51]).unwrap(),
+    ];
 
     (players, opens)
 }

@@ -155,7 +155,7 @@ mod tests {
     fn test_set_declaration() -> Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
-        let d = Declaration::new(players.0[0].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[0].clone(), None, 13, Card::try_from(1)?)?;
         r.set_declaration(d)?;
         Ok(())
     }
@@ -164,7 +164,7 @@ mod tests {
     fn test_set_declaration_invalid_napoleon() -> Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
-        let d = Declaration::new(players.0[0].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[0].clone(), None, 13, Card::try_from(1)?)?;
         r.set_declaration(d)?;
         Ok(())
     }
@@ -173,10 +173,10 @@ mod tests {
     fn test_set_declaration_already_set() -> Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
-        let d = Declaration::new(players.0[0].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[0].clone(), None, 13, Card::try_from(1)?)?;
         r.set_declaration(d)?;
 
-        let d = Declaration::new(players.0[1].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[1].clone(), None, 13, Card::try_from(1)?)?;
         assert!(r.set_declaration(d).is_err());
         Ok(())
     }
@@ -229,7 +229,7 @@ mod tests {
         let trick_result = TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[0].clone(),
-            face_cards: vec![Card::from_id(1)?, Card::from_id(10)?],
+            face_cards: vec![Card::try_from(1)?, Card::try_from(10)?],
         };
 
         r.add(trick_result);
@@ -254,14 +254,18 @@ mod tests {
         let trick_result = TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[0].clone(),
-            face_cards: vec![Card::from_id(1)?, Card::from_id(10)?],
+            face_cards: vec![Card::try_from(1)?, Card::try_from(10)?],
         };
         r.add(trick_result);
 
         let trick_result = TrickResult {
             trick: dummy_trick(r.field_players.clone(), 1),
             winner: players.0[2].clone(),
-            face_cards: vec![Card::from_id(11)?, Card::from_id(12)?, Card::from_id(13)?],
+            face_cards: vec![
+                Card::try_from(11)?,
+                Card::try_from(12)?,
+                Card::try_from(13)?,
+            ],
         };
         r.add(trick_result);
 
@@ -289,7 +293,7 @@ mod tests {
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[0].clone(),
-            face_cards: vec![Card::from_id(1).unwrap()],
+            face_cards: vec![Card::try_from(1)?],
         });
         // ナポレオンが1枚
         assert_eq!(r.team_score()?.0, 1);
@@ -298,7 +302,7 @@ mod tests {
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[1].clone(),
-            face_cards: (2..14).map(|i| Card::from_id(i).unwrap()).collect(),
+            face_cards: (2..14).map(|i| Card::try_from(i).unwrap()).collect(),
         });
         // 副官が11枚とって13
         assert_eq!(r.team_score()?.0, 13);
@@ -307,7 +311,7 @@ mod tests {
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[0].clone(),
-            face_cards: (14..21).map(|i| Card::from_id(i).unwrap()).collect(),
+            face_cards: (14..21).map(|i| Card::try_from(i).unwrap()).collect(),
         });
         // ナポレオンが7枚とって全取り
         assert_eq!(r.team_score()?.0, 20);
@@ -333,7 +337,7 @@ mod tests {
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[2].clone(),
-            face_cards: vec![Card::from_id(1).unwrap()],
+            face_cards: vec![Card::try_from(1)?],
         });
         // 連合が1枚
         assert_eq!(r.team_score()?.1, 1);
@@ -342,7 +346,7 @@ mod tests {
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[3].clone(),
-            face_cards: (2..9).map(|i| Card::from_id(i).unwrap()).collect(),
+            face_cards: (2..9).map(|i| Card::try_from(i).unwrap()).collect(),
         });
         // 副官が7枚とって8枚。終了。
         assert_eq!(r.team_score()?.1, 8);
@@ -368,7 +372,7 @@ mod tests {
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
             winner: players.0[2].clone(),
-            face_cards: vec![Card::from_id(1).unwrap()],
+            face_cards: vec![Card::try_from(1)?],
         });
         assert_eq!(r.last_winner().unwrap(), r.field_players[2].player.clone());
         Ok(())

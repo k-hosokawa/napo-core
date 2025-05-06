@@ -138,9 +138,9 @@ mod tests {
             .enumerate()
             .map(|(pid, p)| {
                 let mut hands: Vec<Card> = (0..9)
-                    .map(|i| Card::from_id(all_cards[(pid * 9) + i]).unwrap())
+                    .map(|i| Card::try_from(all_cards[(pid * 9) + i]).unwrap())
                     .collect();
-                hands.push(Card::from_id(ids[pid]).unwrap());
+                hands.push(Card::try_from(ids[pid]).unwrap());
                 crate::player::FieldPlayer {
                     player: p,
                     role: Some(roles[pid].clone()),
@@ -173,10 +173,10 @@ mod tests {
         assert_eq!(
             r.face_cards,
             vec![
-                Card::from_id(1)?,
-                Card::from_id(24)?,
-                Card::from_id(40)?,
-                Card::from_id(52)?,
+                Card::try_from(1)?,
+                Card::try_from(24)?,
+                Card::try_from(40)?,
+                Card::try_from(52)?,
             ],
         );
         Ok(())
@@ -191,10 +191,10 @@ mod tests {
         assert_eq!(
             r.face_cards,
             vec![
-                Card::from_id(1)?,
-                Card::from_id(25)?,
-                Card::from_id(40)?,
-                Card::from_id(52)?,
+                Card::try_from(1)?,
+                Card::try_from(25)?,
+                Card::try_from(40)?,
+                Card::try_from(52)?,
             ],
         );
         Ok(())
@@ -209,10 +209,10 @@ mod tests {
         assert_eq!(
             r.face_cards,
             vec![
-                Card::from_id(11)?,
-                Card::from_id(24)?,
-                Card::from_id(40)?,
-                Card::from_id(52)?,
+                Card::try_from(11)?,
+                Card::try_from(24)?,
+                Card::try_from(40)?,
+                Card::try_from(52)?,
             ],
         );
         Ok(())
@@ -226,7 +226,11 @@ mod tests {
         assert_eq!(r.winner.id, "e");
         assert_eq!(
             r.face_cards,
-            vec![Card::from_id(24)?, Card::from_id(40)?, Card::from_id(50)?,],
+            vec![
+                Card::try_from(24)?,
+                Card::try_from(40)?,
+                Card::try_from(50)?,
+            ],
         );
         Ok(())
     }
@@ -274,7 +278,7 @@ mod tests {
             assert_eq!(r_card.card, t_card.card);
         }
         for (r_card, t_id) in r.face_cards.iter().zip(face_cards.iter()) {
-            assert_eq!(r_card.to_id(), *t_id);
+            assert_eq!(u8::try_from(*r_card).unwrap(), *t_id);
         }
         assert_eq!(r.winner, winner);
         Ok(())
