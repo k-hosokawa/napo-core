@@ -6,11 +6,31 @@ pub struct Player {
     pub id: String,
 }
 
-pub type Players = [Player; 5];
+#[derive(Debug, Clone)]
+pub struct Players(pub [Player; 5]);
 
-#[allow(dead_code)]
-pub fn get_dummy_players() -> Players {
-    ["a", "b", "c", "d", "e"].map(|s| Player { id: s.to_string() })
+impl Default for Players {
+    fn default() -> Self {
+        Self(["a", "b", "c", "d", "e"].map(|s| Player { id: s.to_string() }))
+    }
+}
+
+impl From<Players> for Vec<Player> {
+    fn from(players: Players) -> Self {
+        players.0.to_vec()
+    }
+}
+
+impl From<Vec<Player>> for Players {
+    fn from(players: Vec<Player>) -> Self {
+        Players(players.try_into().unwrap())
+    }
+}
+
+impl std::iter::FromIterator<Player> for Players {
+    fn from_iter<T: IntoIterator<Item = Player>>(iter: T) -> Self {
+        Self(iter.into_iter().collect::<Vec<_>>().try_into().unwrap())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

@@ -144,47 +144,46 @@ impl Round {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::player::get_dummy_players;
     use crate::trick::{Play, Trick, TrickArray};
 
     #[test]
     fn test_round_new() {
-        Round::new(get_dummy_players());
+        Round::new(crate::player::Players::default());
     }
 
     #[test]
     fn test_set_declaration() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
-        let d = Declaration::new(players[0].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[0].clone(), None, 13, Card::from_id(1)?)?;
         r.set_declaration(d)?;
         Ok(())
     }
 
     #[test]
     fn test_set_declaration_invalid_napoleon() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
-        let d = Declaration::new(players[0].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[0].clone(), None, 13, Card::from_id(1)?)?;
         r.set_declaration(d)?;
         Ok(())
     }
 
     #[test]
     fn test_set_declaration_already_set() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
-        let d = Declaration::new(players[0].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[0].clone(), None, 13, Card::from_id(1)?)?;
         r.set_declaration(d)?;
 
-        let d = Declaration::new(players[1].clone(), None, 13, Card::from_id(1)?)?;
+        let d = Declaration::new(players.0[1].clone(), None, 13, Card::from_id(1)?)?;
         assert!(r.set_declaration(d).is_err());
         Ok(())
     }
 
     #[test]
     fn test_is_alone() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
             r.field_players[0].player.clone(),
@@ -217,7 +216,7 @@ mod tests {
 
     #[test]
     fn test_add() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
             r.field_players[0].player.clone(),
@@ -229,7 +228,7 @@ mod tests {
 
         let trick_result = TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[0].clone(),
+            winner: players.0[0].clone(),
             face_cards: vec![Card::from_id(1)?, Card::from_id(10)?],
         };
 
@@ -240,7 +239,7 @@ mod tests {
 
     #[test]
     fn test_team_score() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.team_score().is_err());
 
@@ -254,14 +253,14 @@ mod tests {
 
         let trick_result = TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[0].clone(),
+            winner: players.0[0].clone(),
             face_cards: vec![Card::from_id(1)?, Card::from_id(10)?],
         };
         r.add(trick_result);
 
         let trick_result = TrickResult {
             trick: dummy_trick(r.field_players.clone(), 1),
-            winner: players[2].clone(),
+            winner: players.0[2].clone(),
             face_cards: vec![Card::from_id(11)?, Card::from_id(12)?, Card::from_id(13)?],
         };
         r.add(trick_result);
@@ -275,7 +274,7 @@ mod tests {
 
     #[test]
     fn test_winner_napoleon() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.winner().is_err());
 
@@ -289,7 +288,7 @@ mod tests {
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[0].clone(),
+            winner: players.0[0].clone(),
             face_cards: vec![Card::from_id(1).unwrap()],
         });
         // ナポレオンが1枚
@@ -298,7 +297,7 @@ mod tests {
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[1].clone(),
+            winner: players.0[1].clone(),
             face_cards: (2..14).map(|i| Card::from_id(i).unwrap()).collect(),
         });
         // 副官が11枚とって13
@@ -307,7 +306,7 @@ mod tests {
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[0].clone(),
+            winner: players.0[0].clone(),
             face_cards: (14..21).map(|i| Card::from_id(i).unwrap()).collect(),
         });
         // ナポレオンが7枚とって全取り
@@ -319,7 +318,7 @@ mod tests {
 
     #[test]
     fn test_winner_union() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.winner().is_err());
 
@@ -333,7 +332,7 @@ mod tests {
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[2].clone(),
+            winner: players.0[2].clone(),
             face_cards: vec![Card::from_id(1).unwrap()],
         });
         // 連合が1枚
@@ -342,7 +341,7 @@ mod tests {
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[3].clone(),
+            winner: players.0[3].clone(),
             face_cards: (2..9).map(|i| Card::from_id(i).unwrap()).collect(),
         });
         // 副官が7枚とって8枚。終了。
@@ -353,7 +352,7 @@ mod tests {
 
     #[test]
     fn test_last_winner() -> Result<()> {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.last_winner().is_err());
 
@@ -368,7 +367,7 @@ mod tests {
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
-            winner: players[2].clone(),
+            winner: players.0[2].clone(),
             face_cards: vec![Card::from_id(1).unwrap()],
         });
         assert_eq!(r.last_winner().unwrap(), r.field_players[2].player.clone());

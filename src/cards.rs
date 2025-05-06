@@ -8,6 +8,7 @@ pub fn distribute_cards(players: &Players) -> (FieldPlayers, [Card; 2]) {
     let mut v: Vec<u8> = (1..53).collect();
     v.shuffle(&mut thread_rng());
     let players: FieldPlayers = players
+        .0
         .iter()
         .enumerate()
         .map(|(pid, p)| {
@@ -31,12 +32,12 @@ pub fn distribute_cards(players: &Players) -> (FieldPlayers, [Card; 2]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::player::get_dummy_players;
     use std::collections::HashSet;
 
     #[test]
     fn test_distribute() {
-        let (field_players, opens) = distribute_cards(&get_dummy_players());
+        let players = Players::default();
+        let (field_players, opens) = distribute_cards(&players);
 
         let mut s = HashSet::new();
         field_players.map(|p| {

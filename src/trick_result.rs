@@ -105,7 +105,6 @@ impl TrickResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::player::{get_dummy_players, FieldPlayer, FieldPlayers, Player, Role};
     use crate::trick::Play;
     use rand::seq::SliceRandom;
     use rand::thread_rng;
@@ -117,13 +116,13 @@ mod tests {
 
     #[allow(dead_code)]
     fn get_trick(ids: &FieldCardIds) -> Trick {
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let roles = [
-            Role::Napoleon,
-            Role::Aide,
-            Role::Union,
-            Role::Union,
-            Role::Union,
+            crate::player::Role::Napoleon,
+            crate::player::Role::Aide,
+            crate::player::Role::Union,
+            crate::player::Role::Union,
+            crate::player::Role::Union,
         ];
 
         let all_cards: Vec<u8> = (1..53).collect();
@@ -133,7 +132,8 @@ mod tests {
             .collect();
         all_cards.shuffle(&mut thread_rng());
 
-        let field_players: FieldPlayers = players
+        let field_players: crate::player::FieldPlayers = players
+            .0
             .into_iter()
             .enumerate()
             .map(|(pid, p)| {
@@ -141,13 +141,13 @@ mod tests {
                     .map(|i| Card::from_id(all_cards[(pid * 9) + i]).unwrap())
                     .collect();
                 hands.push(Card::from_id(ids[pid]).unwrap());
-                FieldPlayer {
+                crate::player::FieldPlayer {
                     player: p,
                     role: Some(roles[pid].clone()),
                     hands: hands.try_into().unwrap(),
                 }
             })
-            .collect::<Vec<FieldPlayer>>()
+            .collect::<Vec<crate::player::FieldPlayer>>()
             .try_into()
             .unwrap();
         let mut trick = Trick::new();

@@ -1,7 +1,6 @@
 use crate::player::{Player, Players};
 use crate::round::Round;
 use serde::{Deserialize, Serialize};
-use std::convert::TryInto;
 
 #[allow(dead_code)]
 #[derive(Serialize, Deserialize)]
@@ -37,7 +36,7 @@ impl Game {
     pub fn new(players: Players) -> Self {
         let rounds: Vec<Round> = Vec::new();
         Game {
-            player_scores: players.map(PlayerScore::new),
+            player_scores: players.0.map(PlayerScore::new),
             rounds,
         }
     }
@@ -47,9 +46,7 @@ impl Game {
             .player_scores
             .iter()
             .map(|ps| ps.player.clone())
-            .collect::<Vec<Player>>()
-            .try_into()
-            .unwrap();
+            .collect();
         let round = Round::new(players);
         self.rounds.push(round);
         self.rounds.last_mut().unwrap()

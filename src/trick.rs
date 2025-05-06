@@ -56,7 +56,6 @@ impl Trick {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::player::get_dummy_players;
     use crate::round::Round;
     use std::iter::zip;
 
@@ -64,7 +63,7 @@ mod tests {
     fn test_trick_add() -> Result<()> {
         let mut trick = Trick::new();
 
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let r = Round::new(players.clone());
         trick.add(Play::new(
             r.field_players[0].player.clone(),
@@ -79,7 +78,7 @@ mod tests {
         let mut trick = Trick::new();
         assert_eq!(trick.last_player(), None);
 
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let r = Round::new(players.clone());
         trick.add(Play::new(
             r.field_players[0].player.clone(),
@@ -100,7 +99,7 @@ mod tests {
         let mut trick = Trick::new();
         assert!(trick.array().is_err());
 
-        let players = get_dummy_players();
+        let players = crate::player::Players::default();
         let r = Round::new(players.clone());
         for p in r.field_players.iter() {
             trick.add(Play::new(p.player.clone(), p.hands[0].clone()));

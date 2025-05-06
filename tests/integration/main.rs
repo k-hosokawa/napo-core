@@ -6,7 +6,7 @@ use napo::card::Suit;
 #[ignore]
 fn game() -> Result<()> {
     // プレイヤーを揃えます
-    let players = napo::player::get_dummy_players();
+    let players = napo::player::Players::default();
 
     // ゲーム開始
     let mut game = napo::game::Game::new(players);
