@@ -44,14 +44,10 @@ impl Round {
                 p.assign_role(Role::Napoleon);
             } else if p.has(&declaration.aide) {
                 p.assign_role(Role::Aide);
-            } else {
-                p.assign_role(Role::Union);
             }
         }
         anyhow::ensure!(
-            self.field_players
-                .iter()
-                .any(|p| p.role == Some(Role::Napoleon)),
+            self.field_players.iter().any(|p| p.role == Role::Napoleon),
             "Napoleon is not found"
         );
         self.declaration = Some(declaration);
@@ -60,10 +56,7 @@ impl Round {
 
     #[allow(dead_code)]
     fn is_alone(&self) -> bool {
-        !self
-            .field_players
-            .iter()
-            .any(|p| p.role == Some(Role::Aide))
+        !self.field_players.iter().any(|p| p.role == Role::Aide)
     }
 
     #[allow(dead_code)]
@@ -73,7 +66,7 @@ impl Round {
             None => self
                 .field_players
                 .iter()
-                .find(|p| p.role == Some(Role::Napoleon))
+                .find(|p| p.role == Role::Napoleon)
                 .context("napoleon is not found")?
                 .player
                 .clone(),
@@ -103,11 +96,10 @@ impl Round {
                 .find(|p| p.player == *player)
                 .unwrap()
                 .role
-                .as_ref();
+                .clone();
             match role {
-                Some(Role::Napoleon) | Some(Role::Aide) => napo_score += s,
-                Some(Role::Union) => union_score += s,
-                None => anyhow::bail!("role is not set"),
+                Role::Napoleon | Role::Aide => napo_score += s,
+                Role::Union => union_score += s,
             }
         }
         Ok((napo_score, union_score))

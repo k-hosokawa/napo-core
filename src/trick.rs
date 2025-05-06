@@ -54,7 +54,6 @@ impl Trick {
 mod tests {
     use super::*;
     use crate::round::Round;
-    use std::iter::zip;
 
     #[test]
     fn test_trick_add() -> anyhow::Result<()> {
@@ -102,7 +101,7 @@ mod tests {
             trick.add(Play::new(p.player.clone(), p.hands[0]));
         }
 
-        for (t, p) in zip(trick.array()?, r.field_players.iter()) {
+        for (t, p) in std::iter::zip(trick.array()?, r.field_players.iter()) {
             assert_eq!(t.player, p.player);
             assert_eq!(t.card, p.hands[0]);
         }

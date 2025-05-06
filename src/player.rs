@@ -51,7 +51,7 @@ pub enum Role {
 pub struct FieldPlayer {
     pub player: Player,
     pub hands: Hands,
-    pub role: Option<Role>,
+    pub role: Role,
 }
 
 impl FieldPlayer {
@@ -59,12 +59,12 @@ impl FieldPlayer {
         FieldPlayer {
             player,
             hands,
-            role: None,
+            role: Role::Union,
         }
     }
 
     pub fn assign_role(&mut self, role: Role) {
-        self.role = Some(role);
+        self.role = role;
     }
 
     pub fn choice_opens(&mut self, opens: [Card; 2], discard: [Card; 2]) {

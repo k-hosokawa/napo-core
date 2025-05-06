@@ -138,7 +138,7 @@ mod tests {
                 hands.push(Card::try_from(ids[pid]).unwrap());
                 crate::player::FieldPlayer {
                     player: p,
-                    role: Some(roles[pid].clone()),
+                    role: roles[pid].clone(),
                     hands: hands.try_into().unwrap(),
                 }
             })
