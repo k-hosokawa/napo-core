@@ -74,8 +74,7 @@ impl Round {
             None => self
                 .field_players
                 .iter()
-                .filter(|p| p.role == Some(Role::Napoleon))
-                .next()
+                .find(|p| p.role == Some(Role::Napoleon))
                 .context("napoleon is not found")?
                 .player
                 .clone(),
@@ -87,7 +86,7 @@ impl Round {
         (*self
             .face_card_counter
             .entry(result.winner.clone())
-            .or_insert(Vec::new()))
+            .or_default())
         .extend(result.face_cards.iter().cloned());
         self.trick_results.push(result);
     }
@@ -96,14 +95,13 @@ impl Round {
     fn team_score(&self) -> Result<(usize, usize)> {
         let mut napo_score = 0;
         let mut union_score = 0;
-        ensure!(self.face_card_counter.len() > 0, "round is not set yet");
+        ensure!(!self.face_card_counter.is_empty(), "round is not set yet");
         for (player, face_cards) in &self.face_card_counter {
             let s = face_cards.len();
             let role = self
                 .field_players
                 .iter()
-                .filter(|p| p.player == *player)
-                .next()
+                .find(|p| p.player == *player)
                 .unwrap()
                 .role
                 .as_ref();
@@ -180,7 +178,7 @@ mod tests {
         r.set_declaration(d)?;
 
         let d = Declaration::new(players[1].clone(), None, 13, Card::from_id(1)?)?;
-        assert_eq!(r.set_declaration(d).is_err(), true);
+        assert!(r.set_declaration(d).is_err());
         Ok(())
     }
 
@@ -195,7 +193,7 @@ mod tests {
             r.field_players[0].hands[0].clone(),
         )?;
         r.set_declaration(d)?;
-        assert_eq!(r.is_alone(), true);
+        assert!(r.is_alone());
 
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
@@ -205,7 +203,7 @@ mod tests {
             r.field_players[1].hands[0].clone(),
         )?;
         r.set_declaration(d)?;
-        assert_eq!(r.is_alone(), false);
+        assert!(!r.is_alone());
         Ok(())
     }
 
@@ -244,7 +242,7 @@ mod tests {
     fn test_team_score() -> Result<()> {
         let players = get_dummy_players();
         let mut r = Round::new(players.clone());
-        assert_eq!(r.team_score().is_err(), true);
+        assert!(r.team_score().is_err());
 
         let d = Declaration::new(
             r.field_players[0].player.clone(),
@@ -279,7 +277,7 @@ mod tests {
     fn test_winner_napoleon() -> Result<()> {
         let players = get_dummy_players();
         let mut r = Round::new(players.clone());
-        assert_eq!(r.winner().is_err(), true);
+        assert!(r.winner().is_err());
 
         let d = Declaration::new(
             r.field_players[0].player.clone(),
@@ -296,7 +294,7 @@ mod tests {
         });
         // ナポレオンが1枚
         assert_eq!(r.team_score()?.0, 1);
-        assert_eq!(r.winner()?.is_none(), true);
+        assert!(r.winner()?.is_none());
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
@@ -323,7 +321,7 @@ mod tests {
     fn test_winner_union() -> Result<()> {
         let players = get_dummy_players();
         let mut r = Round::new(players.clone());
-        assert_eq!(r.winner().is_err(), true);
+        assert!(r.winner().is_err());
 
         let d = Declaration::new(
             r.field_players[0].player.clone(),
@@ -340,7 +338,7 @@ mod tests {
         });
         // 連合が1枚
         assert_eq!(r.team_score()?.1, 1);
-        assert_eq!(r.winner()?.is_none(), true);
+        assert!(r.winner()?.is_none());
 
         r.add(TrickResult {
             trick: dummy_trick(r.field_players.clone(), 0),
@@ -357,7 +355,7 @@ mod tests {
     fn test_last_winner() -> Result<()> {
         let players = get_dummy_players();
         let mut r = Round::new(players.clone());
-        assert_eq!(r.last_winner().is_err(), true);
+        assert!(r.last_winner().is_err());
 
         let d = Declaration::new(
             r.field_players[0].player.clone(),

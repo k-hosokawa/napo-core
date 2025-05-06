@@ -1,7 +1,6 @@
 extern crate napo;
 use anyhow::{bail, Result};
 use napo::card::Suit;
-use napo::trick::Play;
 
 #[test]
 #[ignore]

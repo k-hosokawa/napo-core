@@ -139,9 +139,7 @@ mod tests {
             .map(|(pid, p)| {
                 let mut hands: Vec<Card> = (0..9)
                     .map(|i| Card::from_id(all_cards[(pid * 9) + i]).unwrap())
-                    .collect::<Vec<Card>>()
-                    .try_into()
-                    .unwrap();
+                    .collect();
                 hands.push(Card::from_id(ids[pid]).unwrap());
                 FieldPlayer {
                     player: p,
@@ -272,11 +270,11 @@ mod tests {
             "face_cards": face_cards,
         });
         let r: TrickResult = serde_json::from_str(j.to_string().as_str())?;
-        for i in 0..5 {
-            assert_eq!(r.trick[i].card, trick[i].card);
+        for (r_card, t_card) in r.trick.iter().zip(trick.iter()) {
+            assert_eq!(r_card.card, t_card.card);
         }
-        for i in 0..3 {
-            assert_eq!(r.face_cards[i].to_id(), face_cards[i]);
+        for (r_card, t_id) in r.face_cards.iter().zip(face_cards.iter()) {
+            assert_eq!(r_card.to_id(), *t_id);
         }
         assert_eq!(r.winner, winner);
         Ok(())

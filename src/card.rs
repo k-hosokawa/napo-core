@@ -6,8 +6,9 @@ use serde::{Deserialize as serdeDeserialize, Serialize as serdeSerialize};
 use std::fmt;
 use std::result::Result as stdResult;
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash, serdeSerialize, serdeDeserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, serdeSerialize, serdeDeserialize, Default)]
 pub enum Suit {
+    #[default]
     Spade,
     Heart,
     Diamond,
@@ -22,12 +23,6 @@ impl Suit {
             Suit::Diamond => Suit::Heart,
             Suit::Club => Suit::Spade,
         }
-    }
-}
-
-impl Default for Suit {
-    fn default() -> Self {
-        Suit::Spade
     }
 }
 
@@ -48,7 +43,7 @@ impl Serialize for Card {
 
 struct CardVisitor;
 
-impl<'de> Visitor<'de> for CardVisitor {
+impl Visitor<'_> for CardVisitor {
     type Value = Card;
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("an integer between 1 and 52")
@@ -122,7 +117,7 @@ mod tests {
         assert_eq!(t.suit, Suit::Spade);
 
         let t = Card::from_id(53);
-        assert_eq!(t.is_err(), true);
+        assert!(t.is_err());
 
         let t = Card::from_id(36)?;
         assert_eq!(t.number, 10);
@@ -162,13 +157,13 @@ mod tests {
             number: 1,
             suit: Suit::Spade,
         };
-        assert_eq!(almighty.is_almighty(), true);
+        assert!(almighty.is_almighty());
 
         let normal = Card {
             number: 3,
             suit: Suit::Spade,
         };
-        assert_eq!(normal.is_almighty(), false);
+        assert!(!normal.is_almighty());
     }
 
     #[test]
@@ -177,13 +172,13 @@ mod tests {
             number: 12,
             suit: Suit::Heart,
         };
-        assert_eq!(almighty.is_yoromeki(), true);
+        assert!(almighty.is_yoromeki());
 
         let normal = Card {
             number: 3,
             suit: Suit::Spade,
         };
-        assert_eq!(normal.is_yoromeki(), false);
+        assert!(!normal.is_yoromeki());
     }
 
     #[test]
@@ -199,7 +194,7 @@ mod tests {
     fn test_json_to_trumps() -> Result<()> {
         let j = "[1, 2, 30, 4, 52]";
         let trumps: Vec<Card> = serde_json::from_str(j)?;
-        let answers = vec![
+        let answers = [
             Card {
                 number: 1,
                 suit: Suit::Spade,

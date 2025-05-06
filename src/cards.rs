@@ -41,12 +41,12 @@ mod tests {
         let mut s = HashSet::new();
         field_players.map(|p| {
             p.hands.map(|c| {
-                assert_eq!(s.contains(&c), false);
+                assert!(!s.contains(&c));
                 s.insert(c.clone());
             })
         });
         opens.map(|c| {
-            assert_eq!(s.contains(&c), false);
+            assert!(!s.contains(&c));
             s.insert(c.clone());
         });
     }

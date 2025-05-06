@@ -14,10 +14,7 @@ pub struct Play {
 impl Play {
     #[allow(dead_code)]
     pub fn new(player: Player, card: Card) -> Self {
-        Play {
-            player: player,
-            card,
-        }
+        Play { player, card }
     }
 }
 
@@ -26,6 +23,12 @@ pub type TrickArray = [Play; 5];
 #[derive(Debug)]
 pub struct Trick {
     pub plays: Vec<Play>,
+}
+
+impl Default for Trick {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Trick {
@@ -95,7 +98,7 @@ mod tests {
     #[test]
     fn test_trick_array() -> Result<()> {
         let mut trick = Trick::new();
-        assert_eq!(trick.array().is_err(), true);
+        assert!(trick.array().is_err());
 
         let players = get_dummy_players();
         let r = Round::new(players.clone());

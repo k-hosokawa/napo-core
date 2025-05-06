@@ -48,18 +48,15 @@ mod tests {
 
     #[test]
     fn declaration_new_invalid_number() -> Result<()> {
-        assert_eq!(
-            Declaration::new(
-                Player {
-                    id: "a".to_string(),
-                },
-                None,
-                12,
-                Card::from_id(1)?,
-            )
-            .is_err(),
-            true
-        );
+        assert!(Declaration::new(
+            Player {
+                id: "a".to_string(),
+            },
+            None,
+            12,
+            Card::from_id(1)?,
+        )
+        .is_err());
         Ok(())
     }
 }
