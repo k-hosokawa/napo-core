@@ -37,7 +37,7 @@ impl Serialize for Card {
     where
         S: Serializer,
     {
-        serializer.serialize_u8(u8::try_from(*self).unwrap())
+        serializer.serialize_u8(u8::from(*self))
     }
 }
 
@@ -83,17 +83,15 @@ impl TryFrom<u8> for Card {
     }
 }
 
-impl TryFrom<Card> for u8 {
-    type Error = anyhow::Error;
-
-    fn try_from(card: Card) -> Result<Self> {
+impl From<Card> for u8 {
+    fn from(card: Card) -> Self {
         let suit_num: u8 = match card.suit {
             Suit::Spade => 0,
             Suit::Heart => 1,
             Suit::Diamond => 2,
             Suit::Club => 3,
         };
-        Ok((suit_num * 13) + card.number)
+        (suit_num * 13) + card.number
     }
 }
 
@@ -144,19 +142,19 @@ mod tests {
             number: 1,
             suit: Suit::Spade,
         };
-        assert_eq!(u8::try_from(t).unwrap(), 1);
+        assert_eq!(u8::from(t), 1);
 
         let t = Card {
             number: 10,
             suit: Suit::Club,
         };
-        assert_eq!(u8::try_from(t).unwrap(), 49);
+        assert_eq!(u8::from(t), 49);
 
         let t = Card {
             number: 13,
             suit: Suit::Diamond,
         };
-        assert_eq!(u8::try_from(t).unwrap(), 39);
+        assert_eq!(u8::from(t), 39);
     }
 
     #[test]

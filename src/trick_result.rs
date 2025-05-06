@@ -278,7 +278,7 @@ mod tests {
             assert_eq!(r_card.card, t_card.card);
         }
         for (r_card, t_id) in r.face_cards.iter().zip(face_cards.iter()) {
-            assert_eq!(u8::try_from(*r_card).unwrap(), *t_id);
+            assert_eq!(u8::from(*r_card), *t_id);
         }
         assert_eq!(r.winner, winner);
         Ok(())
