@@ -1,11 +1,10 @@
+use anyhow::Context as _;
+
 use crate::card::Card;
 use crate::cards::distribute_cards;
 use crate::declaration::Declaration;
 use crate::player::{FieldPlayers, Player, Players, Role};
 use crate::trick_result::TrickResult;
-use anyhow::{anyhow, bail, ensure, Context, Result};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq)]
@@ -14,13 +13,13 @@ enum Team {
     Union,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Round {
     pub field_players: FieldPlayers,
     pub opens: [Card; 2],
     trick_results: Vec<TrickResult>,
     declaration: Option<Declaration>,
-    face_card_counter: HashMap<Player, Vec<Card>>,
+    face_card_counter: std::collections::HashMap<Player, Vec<Card>>,
 }
 
 impl Round {
@@ -33,12 +32,12 @@ impl Round {
             opens,
             trick_results,
             declaration: None,
-            face_card_counter: HashMap::new(),
+            face_card_counter: std::collections::HashMap::new(),
         }
     }
 
-    pub fn set_declaration(&mut self, declaration: Declaration) -> Result<()> {
-        ensure!(self.declaration.is_none(), "Napoleon is already set");
+    pub fn set_declaration(&mut self, declaration: Declaration) -> anyhow::Result<()> {
+        anyhow::ensure!(self.declaration.is_none(), "Napoleon is already set");
 
         for p in self.field_players.iter_mut() {
             if p.player == declaration.napoleon {
@@ -49,7 +48,7 @@ impl Round {
                 p.assign_role(Role::Union);
             }
         }
-        ensure!(
+        anyhow::ensure!(
             self.field_players
                 .iter()
                 .any(|p| p.role == Some(Role::Napoleon)),
@@ -68,7 +67,7 @@ impl Round {
     }
 
     #[allow(dead_code)]
-    fn last_winner(&self) -> Result<Player> {
+    fn last_winner(&self) -> anyhow::Result<Player> {
         Ok(match self.trick_results.last() {
             Some(r) => r.winner.clone(),
             None => self
@@ -92,10 +91,10 @@ impl Round {
     }
 
     #[allow(dead_code)]
-    fn team_score(&self) -> Result<(usize, usize)> {
+    fn team_score(&self) -> anyhow::Result<(usize, usize)> {
         let mut napo_score = 0;
         let mut union_score = 0;
-        ensure!(!self.face_card_counter.is_empty(), "round is not set yet");
+        anyhow::ensure!(!self.face_card_counter.is_empty(), "round is not set yet");
         for (player, face_cards) in &self.face_card_counter {
             let s = face_cards.len();
             let role = self
@@ -108,19 +107,19 @@ impl Round {
             match role {
                 Some(Role::Napoleon) | Some(Role::Aide) => napo_score += s,
                 Some(Role::Union) => union_score += s,
-                None => bail!("role is not set"),
+                None => anyhow::bail!("role is not set"),
             }
         }
         Ok((napo_score, union_score))
     }
 
     #[allow(dead_code)]
-    fn winner(&self) -> Result<Option<Team>> {
+    fn winner(&self) -> anyhow::Result<Option<Team>> {
         let (napo_score, union_score) = self.team_score()?;
         let declaration = self
             .declaration
             .as_ref()
-            .ok_or(anyhow!("declaration is not set"))?;
+            .ok_or(anyhow::anyhow!("declaration is not set"))?;
         if union_score > 20 - declaration.number {
             return Ok(Some(Team::Union));
         }
@@ -152,7 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_declaration() -> Result<()> {
+    fn test_set_declaration() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(players.0[0].clone(), None, 13, Card::try_from(1)?)?;
@@ -161,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_declaration_invalid_napoleon() -> Result<()> {
+    fn test_set_declaration_invalid_napoleon() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(players.0[0].clone(), None, 13, Card::try_from(1)?)?;
@@ -170,7 +169,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_declaration_already_set() -> Result<()> {
+    fn test_set_declaration_already_set() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(players.0[0].clone(), None, 13, Card::try_from(1)?)?;
@@ -182,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_alone() -> Result<()> {
+    fn test_is_alone() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
@@ -215,7 +214,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add() -> Result<()> {
+    fn test_add() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         let d = Declaration::new(
@@ -238,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn test_team_score() -> Result<()> {
+    fn test_team_score() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.team_score().is_err());
@@ -277,7 +276,7 @@ mod tests {
     }
 
     #[test]
-    fn test_winner_napoleon() -> Result<()> {
+    fn test_winner_napoleon() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.winner().is_err());
@@ -321,7 +320,7 @@ mod tests {
     }
 
     #[test]
-    fn test_winner_union() -> Result<()> {
+    fn test_winner_union() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.winner().is_err());
@@ -355,7 +354,7 @@ mod tests {
     }
 
     #[test]
-    fn test_last_winner() -> Result<()> {
+    fn test_last_winner() -> anyhow::Result<()> {
         let players = crate::player::Players::default();
         let mut r = Round::new(players.clone());
         assert!(r.last_winner().is_err());

@@ -1,9 +1,8 @@
 use crate::player::{Player, Players};
 use crate::round::Round;
-use serde::{Deserialize, Serialize};
 
 #[allow(dead_code)]
-#[derive(Serialize, Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 struct PlayerScore {
     player: Player,
     score: usize,
@@ -25,7 +24,7 @@ impl PlayerScore {
 }
 
 #[allow(dead_code)]
-#[derive(Serialize, Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Game {
     player_scores: PlayerScores,
     rounds: Vec<Round>,

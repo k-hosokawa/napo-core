@@ -1,10 +1,8 @@
 extern crate napo;
-use anyhow::{bail, Result};
-use napo::card::Suit;
 
 #[test]
 #[ignore]
-fn game() -> Result<()> {
+fn game() -> anyhow::Result<()> {
     // プレイヤーを揃えます
     let players = napo::player::Players::default();
 
@@ -18,7 +16,7 @@ fn game() -> Result<()> {
     let napoleon = round.field_players[0].player.clone();
 
     // 立ちを決めます
-    let suit = Suit::Spade;
+    let suit = napo::card::Suit::Spade;
     let number = 15;
 
     // 副官を指名します
@@ -34,5 +32,5 @@ fn game() -> Result<()> {
 
     round.set_declaration(declaration)?;
     // println!("{:?}", round);
-    bail!("hoge")
+    anyhow::bail!("hoge")
 }

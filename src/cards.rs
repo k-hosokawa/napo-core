@@ -1,12 +1,10 @@
 use crate::card::Card;
 use crate::player::{FieldPlayer, FieldPlayers, Players};
 use rand::seq::SliceRandom;
-use rand::thread_rng;
-use std::convert::TryInto;
 
 pub fn distribute_cards(players: &Players) -> (FieldPlayers, [Card; 2]) {
     let mut v: Vec<u8> = (1..53).collect();
-    v.shuffle(&mut thread_rng());
+    v.shuffle(&mut rand::thread_rng());
     let players: FieldPlayers = players
         .0
         .iter()

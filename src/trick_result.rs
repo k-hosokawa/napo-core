@@ -1,8 +1,6 @@
 use crate::card::{Card, Suit};
 use crate::player::Player;
 use crate::trick::{Trick, TrickArray};
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
 
 struct TrickResultBuilder {
     trick: TrickArray,
@@ -10,7 +8,7 @@ struct TrickResultBuilder {
 }
 
 impl TrickResultBuilder {
-    fn new(trick: &Trick) -> Result<Self> {
+    fn new(trick: &Trick) -> anyhow::Result<Self> {
         let face_cards: Vec<Card> = trick
             .plays
             .iter()
@@ -23,7 +21,7 @@ impl TrickResultBuilder {
         })
     }
 
-    fn build(&self, winner_id: usize) -> Result<TrickResult> {
+    fn build(&self, winner_id: usize) -> anyhow::Result<TrickResult> {
         Ok(TrickResult {
             trick: self.trick.clone(),
             face_cards: self.face_cards.clone(),
@@ -33,7 +31,7 @@ impl TrickResultBuilder {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct TrickResult {
     pub trick: TrickArray,
     pub winner: Player,
@@ -42,7 +40,7 @@ pub struct TrickResult {
 
 impl TrickResult {
     #[allow(dead_code)]
-    pub fn new(trick: &Trick, suit: Option<Suit>, n_round: u8) -> Result<Self> {
+    pub fn new(trick: &Trick, suit: Option<Suit>, n_round: u8) -> anyhow::Result<Self> {
         let builder = TrickResultBuilder::new(trick)?;
 
         // almighty
@@ -107,9 +105,6 @@ mod tests {
     use super::*;
     use crate::trick::Play;
     use rand::seq::SliceRandom;
-    use rand::thread_rng;
-    use serde_json::json;
-    use std::convert::TryInto;
 
     #[allow(dead_code)]
     type FieldCardIds = [u8; 5];
@@ -130,7 +125,7 @@ mod tests {
             .into_iter()
             .filter(|c| !ids.iter().any(|g| g == c))
             .collect();
-        all_cards.shuffle(&mut thread_rng());
+        all_cards.shuffle(&mut rand::thread_rng());
 
         let field_players: crate::player::FieldPlayers = players
             .0
@@ -158,14 +153,14 @@ mod tests {
     }
 
     #[test]
-    fn test_get_field_cards() -> Result<()> {
+    fn test_get_field_cards() -> anyhow::Result<()> {
         let v: FieldCardIds = [1, 4, 25, 40, 52];
         get_trick(&v);
         Ok(())
     }
 
     #[test]
-    fn test_judge_winner_almighty() -> Result<()> {
+    fn test_judge_winner_almighty() -> anyhow::Result<()> {
         let v: FieldCardIds = [1, 4, 24, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 1)?;
@@ -183,7 +178,7 @@ mod tests {
     }
 
     #[test]
-    fn test_judge_winner_yoromeki() -> Result<()> {
+    fn test_judge_winner_yoromeki() -> anyhow::Result<()> {
         let v: FieldCardIds = [1, 4, 25, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, None, 1)?;
@@ -201,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn test_judge_winner_jack() -> Result<()> {
+    fn test_judge_winner_jack() -> anyhow::Result<()> {
         let v: FieldCardIds = [2, 11, 24, 40, 52];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, Some(Suit::Spade), 1)?;
@@ -219,7 +214,7 @@ mod tests {
     }
 
     #[test]
-    fn test_judge_winner_rev_jack() -> Result<()> {
+    fn test_judge_winner_rev_jack() -> anyhow::Result<()> {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, Some(Suit::Spade), 1)?;
@@ -236,7 +231,7 @@ mod tests {
     }
 
     #[test]
-    fn test_judge_winner_same2() -> Result<()> {
+    fn test_judge_winner_same2() -> anyhow::Result<()> {
         let v: FieldCardIds = [2, 3, 4, 5, 6];
 
         let t = get_trick(&v);
@@ -251,7 +246,7 @@ mod tests {
     }
 
     #[test]
-    fn test_to_json() -> Result<()> {
+    fn test_to_json() -> anyhow::Result<()> {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
         let t = get_trick(&v);
         let r = TrickResult::new(&t, Some(Suit::Spade), 1)?;
@@ -261,14 +256,14 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_from_json() -> Result<()> {
+    fn test_from_json() -> anyhow::Result<()> {
         let v: FieldCardIds = [2, 4, 24, 40, 50];
         let trick = get_trick(&v).array()?;
         let winner = Player {
             id: "e".to_string(),
         };
         let face_cards: [u8; 3] = [4, 24, 50];
-        let j = json!({
+        let j = serde_json::json!({
             "trick": trick,
             "winner": winner,
             "face_cards": face_cards,

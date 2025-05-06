@@ -1,12 +1,6 @@
-use anyhow::{bail, ensure, Result};
-use serde::de;
-use serde::de::{Deserialize, Deserializer, Visitor};
-use serde::ser::{Serialize, Serializer};
-use serde::{Deserialize as serdeDeserialize, Serialize as serdeSerialize};
-use std::fmt;
-use std::result::Result as stdResult;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, serdeSerialize, serdeDeserialize, Default)]
+#[derive(
+    Debug, PartialEq, Eq, Clone, Copy, Hash, serde::Serialize, serde::Deserialize, Default,
+)]
 pub enum Suit {
     #[default]
     Spade,
@@ -32,10 +26,10 @@ pub struct Card {
     pub suit: Suit,
 }
 
-impl Serialize for Card {
-    fn serialize<S>(&self, serializer: S) -> stdResult<S::Ok, S::Error>
+impl serde::Serialize for Card {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer,
+        S: serde::ser::Serializer,
     {
         serializer.serialize_u8(u8::from(*self))
     }
@@ -43,24 +37,24 @@ impl Serialize for Card {
 
 struct CardVisitor;
 
-impl Visitor<'_> for CardVisitor {
+impl serde::de::Visitor<'_> for CardVisitor {
     type Value = Card;
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str("an integer between 1 and 52")
     }
 
     fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
     where
-        E: de::Error,
+        E: serde::de::Error,
     {
         Card::try_from(value as u8).map_err(|e| E::custom(e))
     }
 }
 
-impl<'de> Deserialize<'de> for Card {
+impl<'de> serde::Deserialize<'de> for Card {
     fn deserialize<D>(deserializer: D) -> Result<Card, D::Error>
     where
-        D: Deserializer<'de>,
+        D: serde::de::Deserializer<'de>,
     {
         deserializer.deserialize_u8(CardVisitor)
     }
@@ -69,15 +63,15 @@ impl<'de> Deserialize<'de> for Card {
 impl TryFrom<u8> for Card {
     type Error = anyhow::Error;
 
-    fn try_from(id: u8) -> Result<Self> {
-        ensure!((1..=52).contains(&id), "invalid id \"{}\"", id);
+    fn try_from(id: u8) -> anyhow::Result<Self> {
+        anyhow::ensure!((1..=52).contains(&id), "invalid id \"{}\"", id);
         let number = ((id - 1) % 13) + 1;
         let suit = match (id - 1) / 13 {
             0 => Suit::Spade,
             1 => Suit::Heart,
             2 => Suit::Diamond,
             3 => Suit::Club,
-            _ => bail!("invalid id \"{}\"", id),
+            _ => anyhow::bail!("invalid id \"{}\"", id),
         };
         Ok(Card { number, suit })
     }
@@ -114,10 +108,9 @@ pub type Hands = [Card; 10];
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json;
 
     #[test]
-    fn test_trump_from_id() -> Result<()> {
+    fn test_trump_from_id() -> anyhow::Result<()> {
         let t = Card::try_from(1)?;
         assert_eq!(t.number, 1);
         assert_eq!(t.suit, Suit::Spade);
@@ -197,7 +190,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_to_trumps() -> Result<()> {
+    fn test_json_to_trumps() -> anyhow::Result<()> {
         let j = "[1, 2, 30, 4, 52]";
         let trumps: Vec<Card> = serde_json::from_str(j)?;
         let answers = [

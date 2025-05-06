@@ -1,9 +1,7 @@
 use crate::card::{Card, Suit};
 use crate::player::Player;
-use anyhow::{ensure, Result};
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Declaration {
     pub napoleon: Player,
     pub suit: Option<Suit>,
@@ -13,8 +11,13 @@ pub struct Declaration {
 
 impl Declaration {
     #[allow(dead_code)]
-    pub fn new(napoleon: Player, suit: Option<Suit>, number: usize, aide: Card) -> Result<Self> {
-        ensure!(number > 12 && number < 21, "invalid declaration number");
+    pub fn new(
+        napoleon: Player,
+        suit: Option<Suit>,
+        number: usize,
+        aide: Card,
+    ) -> anyhow::Result<Self> {
+        anyhow::ensure!(number > 12 && number < 21, "invalid declaration number");
         Ok(Declaration {
             napoleon,
             suit,
@@ -34,7 +37,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn declaration_new() -> Result<()> {
+    fn declaration_new() -> anyhow::Result<()> {
         Declaration::new(
             Player {
                 id: "a".to_string(),
@@ -47,7 +50,7 @@ mod tests {
     }
 
     #[test]
-    fn declaration_new_invalid_number() -> Result<()> {
+    fn declaration_new_invalid_number() -> anyhow::Result<()> {
         assert!(Declaration::new(
             Player {
                 id: "a".to_string(),
@@ -61,7 +64,7 @@ mod tests {
     }
 
     #[test]
-    fn declaration_base_score() -> Result<()> {
+    fn declaration_base_score() -> anyhow::Result<()> {
         let d = Declaration::new(Player::default(), None, 13, Card::try_from(1)?)?;
         assert_eq!(d.base_score(), 1);
         Ok(())

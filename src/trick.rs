@@ -1,11 +1,8 @@
 use crate::card::Card;
 use crate::player::Player;
-use anyhow::{ensure, Result};
-use serde::{Deserialize, Serialize};
-use std::convert::TryInto;
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Play {
     pub player: Player,
     pub card: Card,
@@ -47,8 +44,8 @@ impl Trick {
         Some(self.plays.last()?.player.clone())
     }
 
-    pub(crate) fn array(&self) -> Result<TrickArray> {
-        ensure!(self.plays.len() == 5, "This Trick is not finished yet");
+    pub(crate) fn array(&self) -> anyhow::Result<TrickArray> {
+        anyhow::ensure!(self.plays.len() == 5, "This Trick is not finished yet");
         Ok(self.plays.clone().try_into().unwrap())
     }
 }
@@ -60,7 +57,7 @@ mod tests {
     use std::iter::zip;
 
     #[test]
-    fn test_trick_add() -> Result<()> {
+    fn test_trick_add() -> anyhow::Result<()> {
         let mut trick = Trick::new();
 
         let players = crate::player::Players::default();
@@ -74,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trick_last_player() -> Result<()> {
+    fn test_trick_last_player() -> anyhow::Result<()> {
         let mut trick = Trick::new();
         assert_eq!(trick.last_player(), None);
 
@@ -95,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trick_array() -> Result<()> {
+    fn test_trick_array() -> anyhow::Result<()> {
         let mut trick = Trick::new();
         assert!(trick.array().is_err());
 
